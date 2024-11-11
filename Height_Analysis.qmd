@@ -1,12 +1,24 @@
 ---
-title: "Height Analysis"
+title: "Height Data Analysis"
 format: html
 editor: visual
 ---
 
-## Height Data Analysis
+## Step 1: Loading and Subsetting Data
 
-### Loading and Subsetting Data
+### IGNORE OUTPUT FROM LOADING PACKAGES
+
+**Loading Appropriate Packages**
+
+```{r}
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(glmmTMB)
+library(ggplot2)
+```
+
+### Reading in Data Source
 
 ```{r}
 # Read the data
@@ -15,20 +27,30 @@ data <- read.csv("Data.csv", header=TRUE)
 
 **Subsetting data to:**
 
-1)  Only include values from unenclosed plants.
+**1)  Only include values from unenclosed plants.**
 
-2)  Convert predictor variables to factors with "levels".
+**2)  Convert predictor variables to factors with "levels".**
 
-3)  Remove rows with missing values (missing values = dead plant or sampling error).
+**3)  Remove rows with missing values (missing values = dead plant or sampling error).**
 
 ```{r}
 # Subset to remove Enclosure values
 data <- data[data$Enclosure == "0", ]
+
+# Convert categorical variables to factors
+data$Field <- as.factor(data$Field)
+data$Plot <- as.factor(data$Plot)
+data$Treatment <- as.factor(data$Treatment)
+data$Enclosure <- as.factor(data$Enclosure)
+
+# Remove rows with missing Height values
+data <- data |>
+  filter(!is.na(Height))
 ```
 
-### Exploratory Data Analysis
+## Step 2: Exploratory Data Analysis
 
-**Calculating the mean soybean height for treatments across Weeks after application.**
+**Calculating and Displaying mean soybean height for treatments across Weeks after application.**
 
 ```{r}
 # Calculate mean Height for each Treatment and WAT combination
@@ -36,10 +58,11 @@ summary_data <- data |>
   group_by(Treatment, WAT) |>
   summarise(mean_height = mean(Height, na.rm = TRUE))
 
+# Displaying mean soybean height for treatments across Weeks after application
 print(summary_data)
 ```
 
-**Plotting "Mean Height by Treatment Over Time"**
+## **Plotting "Mean Height by Treatment Over Time"**
 
 ```{r}
 #| echo: false
@@ -53,7 +76,7 @@ ggplot(summary_data, aes(x = WAT, y = mean_height, color = Treatment, group = Tr
   theme_minimal()
 ```
 
-**Box plot's showing the distribution of height over time.**
+## **Box plot's showing the distribution of height over time.**
 
 ```{r}
 #| echo: false
@@ -73,7 +96,7 @@ ggplot(data, aes(x = Treatment, y = Height, fill = Treatment)) +
   )
 ```
 
-### Simple Analysis
+## Step 3: Simple Analysis
 
 **Fitting models for simple linear Regression**
 
@@ -110,7 +133,7 @@ summary(lm_height_3)
 
 **The Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05**
 
-### Checking Model Assumptions
+## Step 4: Checking Model Assumptions
 
 Using a QQ plot to look for non-normal distributions of the model's plotted residuals
 
@@ -118,7 +141,7 @@ Using a QQ plot to look for non-normal distributions of the model's plotted resi
 plot(lm_height_3)
 ```
 
-**Looking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably overlooked.**
+**Looking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine**
 
 **Also, I don't believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I'm currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.**
 
