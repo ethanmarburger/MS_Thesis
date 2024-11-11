@@ -1,0 +1,125 @@
+---
+title: "Height Analysis"
+format: html
+editor: visual
+---
+
+## Height Data Analysis
+
+### Loading and Subsetting Data
+
+```{r}
+# Read the data
+data <- read.csv("Data.csv", header=TRUE)
+```
+
+**Subsetting data to:**
+
+1)  Only include values from unenclosed plants.
+
+2)  Convert predictor variables to factors with "levels".
+
+3)  Remove rows with missing values (missing values = dead plant or sampling error).
+
+```{r}
+# Subset to remove Enclosure values
+data <- data[data$Enclosure == "0", ]
+```
+
+### Exploratory Data Analysis
+
+**Calculating the mean soybean height for treatments across Weeks after application.**
+
+```{r}
+# Calculate mean Height for each Treatment and WAT combination
+summary_data <- data |>
+  group_by(Treatment, WAT) |>
+  summarise(mean_height = mean(Height, na.rm = TRUE))
+
+print(summary_data)
+```
+
+**Plotting "Mean Height by Treatment Over Time"**
+
+```{r}
+#| echo: false
+# Create a plot
+ggplot(summary_data, aes(x = WAT, y = mean_height, color = Treatment, group = Treatment)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Mean Height by Treatment over Time",
+       x = "Weeks After Treatment",
+       y = "Mean Height") +
+  theme_minimal()
+```
+
+**Box plot's showing the distribution of height over time.**
+
+```{r}
+#| echo: false
+# Box plot with centered, larger title and two legends: one for Treatment and one for WAT
+ggplot(data, aes(x = Treatment, y = Height, fill = Treatment)) +
+  geom_boxplot() +
+  facet_wrap(~ WAT, nrow = 1) +  # Facet in a single row
+  labs(title = "Height Distribution by Treatment over Time",
+       x = "Treatment",
+       y = "Height") +
+  # Create a dummy aesthetic for WAT to generate a second legend
+  geom_point(aes(color = factor(WAT)), alpha = 0) +  # Invisible points to create the WAT legend
+  scale_color_discrete(name = "Weeks After Treatment") +  # Legend for WAT
+  theme(
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5, size = 14)  # Center title and increase font size by 2 points (default is ~12)
+  )
+```
+
+### Simple Analysis
+
+**Fitting models for simple linear Regression**
+
+```{r}
+# Linear Regression for Height
+
+# Null Model
+lm_height_1 <- lm(formula = Height ~ Treatment, data = data)
+
+# Partial Model
+lm_height_2 <- lm(formula = Height ~ Treatment * WAT, data = data)
+
+# Full Model
+lm_height_3 <- lm(formula = Height ~ Treatment * WAT * Field, data = data)
+```
+
+**Choosing the best model**
+
+```{r}
+#ANOVA for differences in models 
+anova(lm_height_1, lm_height_2, lm_height_3)
+
+# AIC to pick the best model
+AIC(lm_height_1, lm_height_2, lm_height_3)
+
+# Model lm_height_3 has the lowest AIC
+```
+
+**Best Model: Model 3 Full Model**
+
+```{r}
+summary(lm_height_3)
+```
+
+**The Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05**
+
+### Checking Model Assumptions
+
+Using a QQ plot to look for non-normal distributions of the model's plotted residuals
+
+```{r}
+plot(lm_height_3)
+```
+
+**Looking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably overlooked.**
+
+**Also, I don't believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I'm currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.**
+
+**A better fitting model will provide more accurate results.**
