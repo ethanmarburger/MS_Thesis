@@ -1,0 +1,51 @@
+[
+  {
+    "objectID": "Height_Analysis.html",
+    "href": "Height_Analysis.html",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "Loading Appropriate Packages\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.1     ✔ tibble    3.2.1\n✔ lubridate 1.9.3     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nlibrary(lme4)\n\nLoading required package: Matrix\n\nAttaching package: 'Matrix'\n\nThe following objects are masked from 'package:tidyr':\n\n    expand, pack, unpack\n\nlibrary(lmerTest)\n\n\nAttaching package: 'lmerTest'\n\nThe following object is masked from 'package:lme4':\n\n    lmer\n\nThe following object is masked from 'package:stats':\n\n    step\n\nlibrary(glmmTMB)\nlibrary(ggplot2)\n\n\n\n\n\n# Read the data\ndata &lt;- read.csv(\"Data.csv\", header=TRUE)\n\nSubsetting data to:\n1) Only include values from unenclosed plants.\n2) Convert predictor variables to factors with “levels”.\n3) Remove rows with missing values (missing values = dead plant or sampling error).\n\n# Subset to remove Enclosure values\ndata &lt;- data[data$Enclosure == \"0\", ]\n\n# Convert categorical variables to factors\ndata$Field &lt;- as.factor(data$Field)\ndata$Plot &lt;- as.factor(data$Plot)\ndata$Treatment &lt;- as.factor(data$Treatment)\ndata$Enclosure &lt;- as.factor(data$Enclosure)\n\n# Remove rows with missing Height values\ndata &lt;- data |&gt;\n  filter(!is.na(Height))"
+  },
+  {
+    "objectID": "Height_Analysis.html#step-1-loading-and-subsetting-data",
+    "href": "Height_Analysis.html#step-1-loading-and-subsetting-data",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "Loading Appropriate Packages\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.1     ✔ tibble    3.2.1\n✔ lubridate 1.9.3     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nlibrary(lme4)\n\nLoading required package: Matrix\n\nAttaching package: 'Matrix'\n\nThe following objects are masked from 'package:tidyr':\n\n    expand, pack, unpack\n\nlibrary(lmerTest)\n\n\nAttaching package: 'lmerTest'\n\nThe following object is masked from 'package:lme4':\n\n    lmer\n\nThe following object is masked from 'package:stats':\n\n    step\n\nlibrary(glmmTMB)\nlibrary(ggplot2)\n\n\n\n\n\n# Read the data\ndata &lt;- read.csv(\"Data.csv\", header=TRUE)\n\nSubsetting data to:\n1) Only include values from unenclosed plants.\n2) Convert predictor variables to factors with “levels”.\n3) Remove rows with missing values (missing values = dead plant or sampling error).\n\n# Subset to remove Enclosure values\ndata &lt;- data[data$Enclosure == \"0\", ]\n\n# Convert categorical variables to factors\ndata$Field &lt;- as.factor(data$Field)\ndata$Plot &lt;- as.factor(data$Plot)\ndata$Treatment &lt;- as.factor(data$Treatment)\ndata$Enclosure &lt;- as.factor(data$Enclosure)\n\n# Remove rows with missing Height values\ndata &lt;- data |&gt;\n  filter(!is.na(Height))"
+  },
+  {
+    "objectID": "Height_Analysis.html#step-2-exploratory-data-analysis",
+    "href": "Height_Analysis.html#step-2-exploratory-data-analysis",
+    "title": "Height Data Analysis",
+    "section": "Step 2: Exploratory Data Analysis",
+    "text": "Step 2: Exploratory Data Analysis\nCalculating and Displaying mean soybean height for treatments across Weeks after application.\n\n# Calculate mean Height for each Treatment and WAT combination\nsummary_data &lt;- data |&gt;\n  group_by(Treatment, WAT) |&gt;\n  summarise(mean_height = mean(Height, na.rm = TRUE))\n\n`summarise()` has grouped output by 'Treatment'. You can override using the\n`.groups` argument.\n\n# Displaying mean soybean height for treatments across Weeks after application\nprint(summary_data)\n\n# A tibble: 10 × 3\n# Groups:   Treatment [2]\n   Treatment   WAT mean_height\n   &lt;fct&gt;     &lt;int&gt;       &lt;dbl&gt;\n 1 0             0        12.1\n 2 0             1        14.2\n 3 0             2        15.7\n 4 0             3        20.1\n 5 0             4        26.9\n 6 1             0        12.1\n 7 1             1        14.9\n 8 1             2        16.9\n 9 1             3        21.0\n10 1             4        28.4"
+  },
+  {
+    "objectID": "Height_Analysis.html#plotting-mean-height-by-treatment-over-time",
+    "href": "Height_Analysis.html#plotting-mean-height-by-treatment-over-time",
+    "title": "Height Data Analysis",
+    "section": "Plotting “Mean Height by Treatment Over Time”",
+    "text": "Plotting “Mean Height by Treatment Over Time”"
+  },
+  {
+    "objectID": "Height_Analysis.html#box-plots-showing-the-distribution-of-height-over-time.",
+    "href": "Height_Analysis.html#box-plots-showing-the-distribution-of-height-over-time.",
+    "title": "Height Data Analysis",
+    "section": "Box plot’s showing the distribution of height over time.",
+    "text": "Box plot’s showing the distribution of height over time."
+  },
+  {
+    "objectID": "Height_Analysis.html#step-3-simple-analysis",
+    "href": "Height_Analysis.html#step-3-simple-analysis",
+    "title": "Height Data Analysis",
+    "section": "Step 3: Simple Analysis",
+    "text": "Step 3: Simple Analysis\nFitting models for simple linear Regression\n\n# Linear Regression for Height\n\n# Null Model\nlm_height_1 &lt;- lm(formula = Height ~ Treatment, data = data)\n\n# Partial Model\nlm_height_2 &lt;- lm(formula = Height ~ Treatment * WAT, data = data)\n\n# Full Model\nlm_height_3 &lt;- lm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nChoosing the best model\n\n#ANOVA for differences in models \nanova(lm_height_1, lm_height_2, lm_height_3)\n\nAnalysis of Variance Table\n\nModel 1: Height ~ Treatment\nModel 2: Height ~ Treatment * WAT\nModel 3: Height ~ Treatment * WAT * Field\n  Res.Df   RSS Df Sum of Sq       F    Pr(&gt;F)    \n1   1344 87902                                   \n2   1342 51876  2     36026 644.794 &lt; 2.2e-16 ***\n3   1334 37267  8     14609  65.368 &lt; 2.2e-16 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n# AIC to pick the best model\nAIC(lm_height_1, lm_height_2, lm_height_3)\n\n            df      AIC\nlm_height_1  3 9450.838\nlm_height_2  5 8745.000\nlm_height_3 13 8315.810\n\n# Model lm_height_3 has the lowest AIC\n\nBest Model: Model 3 Full Model\n\nsummary(lm_height_3)\n\n\nCall:\nlm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nResiduals:\n     Min       1Q   Median       3Q      Max \n-17.2903  -3.2155  -0.0876   3.1029  19.7837 \n\nCoefficients:\n                      Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)           12.31979    0.74626  16.509  &lt; 2e-16 ***\nTreatment1            -0.01612    1.05537  -0.015 0.987814    \nWAT                    4.26400    0.27667  15.412  &lt; 2e-16 ***\nField2                -3.02230    1.18086  -2.559 0.010594 *  \nField3                -3.25640    0.94515  -3.445 0.000588 ***\nTreatment1:WAT         0.93382    0.39127   2.387 0.017142 *  \nTreatment1:Field2      1.09813    1.66934   0.658 0.510764    \nTreatment1:Field3      0.16590    1.33813   0.124 0.901351    \nWAT:Field2            -2.10073    0.43895  -4.786 1.89e-06 ***\nWAT:Field3            -0.20726    0.35166  -0.589 0.555706    \nTreatment1:WAT:Field2 -0.82662    0.61972  -1.334 0.182472    \nTreatment1:WAT:Field3 -0.98977    0.49974  -1.981 0.047844 *  \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 5.285 on 1334 degrees of freedom\nMultiple R-squared:  0.5772,    Adjusted R-squared:  0.5738 \nF-statistic: 165.6 on 11 and 1334 DF,  p-value: &lt; 2.2e-16\n\n\nThe Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05"
+  },
+  {
+    "objectID": "Height_Analysis.html#step-4-checking-model-assumptions",
+    "href": "Height_Analysis.html#step-4-checking-model-assumptions",
+    "title": "Height Data Analysis",
+    "section": "Step 4: Checking Model Assumptions",
+    "text": "Step 4: Checking Model Assumptions\nUsing a QQ plot to look for non-normal distributions of the model’s plotted residuals\n\nplot(lm_height_3)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLooking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine\nAlso, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I’m currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.\nA better fitting model will provide more accurate results."
+  }
+]
