@@ -27,7 +27,7 @@ library(nlme)
 data <- read.csv("Data.csv", header=TRUE)
 ```
 
-**Subsetting data to:**
+**Sub setting data to:**
 
 **1) Only include values from unenclosed plants.**
 
