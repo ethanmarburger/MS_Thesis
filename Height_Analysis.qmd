@@ -288,3 +288,5 @@ qqline(residuals_log, col = "red")
 **Quantiles seem to be better fit with log transformed model.**
 
 **Log transformed mixed effects model seems to be the best fit model for analyzing the Height variable.**
+
+**I'll reach out someone in the Statistics Department for confirmation.**
