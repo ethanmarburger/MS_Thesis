@@ -133,92 +133,50 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="step-1-loading-and-subsetting-data" class="level2">
-<h2 class="anchored" data-anchor-id="step-1-loading-and-subsetting-data">Step 1: Loading and Subsetting Data</h2>
-<section id="ignore-output-from-loading-packages" class="level3">
-<h3 class="anchored" data-anchor-id="ignore-output-from-loading-packages">IGNORE OUTPUT FROM LOADING PACKAGES</h3>
-<p><strong>Loading Appropriate Packages</strong></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.4     ✔ readr     2.1.5
-✔ forcats   1.0.0     ✔ stringr   1.5.1
-✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-✔ purrr     1.0.2     
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lme4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: Matrix
-
-Attaching package: 'Matrix'
-
-The following objects are masked from 'package:tidyr':
-
-    expand, pack, unpack</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lmerTest)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'lmerTest'
-
-The following object is masked from 'package:lme4':
-
-    lmer
-
-The following object is masked from 'package:stats':
-
-    step</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmmTMB)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
+<section id="initial-height-analysis" class="level1">
+<h1>Initial Height Analysis</h1>
+<section id="loading-and-subsetting-data" class="level2">
+<h2 class="anchored" data-anchor-id="loading-and-subsetting-data">Loading and Subsetting Data</h2>
 <section id="reading-in-data-source" class="level3">
 <h3 class="anchored" data-anchor-id="reading-in-data-source">Reading in Data Source</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read the data</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"Data.csv"</span>, <span class="at">header=</span><span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read the data</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"Data.csv"</span>, <span class="at">header=</span><span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p><strong>Subsetting data to:</strong></p>
+<p><strong>Sub setting data to:</strong></p>
 <p><strong>1) Only include values from unenclosed plants.</strong></p>
 <p><strong>2) Convert predictor variables to factors with “levels”.</strong></p>
 <p><strong>3) Remove rows with missing values (missing values = dead plant or sampling error).</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset to remove Enclosure values</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data[data<span class="sc">$</span>Enclosure <span class="sc">==</span> <span class="st">"0"</span>, ]</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert categorical variables to factors</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Field <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Field)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Plot <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Plot)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Treatment)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Enclosure <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Enclosure)</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove rows with missing Height values</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Height))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset to remove Enclosure values</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data[data<span class="sc">$</span>Enclosure <span class="sc">==</span> <span class="st">"0"</span>, ]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert categorical variables to factors</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Field <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Field)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Plot <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Plot)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Treatment <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Treatment)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>Enclosure <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(data<span class="sc">$</span>Enclosure)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove rows with missing Height values</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Height))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
-<section id="step-2-exploratory-data-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="step-2-exploratory-data-analysis">Step 2: Exploratory Data Analysis</h2>
+<section id="exploratory-data-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory Data Analysis</h2>
 <p><strong>Calculating and Displaying mean soybean height for treatments across Weeks after application.</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate mean Height for each Treatment and WAT combination</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>summary_data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Treatment, WAT) <span class="sc">|&gt;</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_height =</span> <span class="fu">mean</span>(Height, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate mean Height for each Treatment and WAT combination</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>summary_data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Treatment, WAT) <span class="sc">|&gt;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_height =</span> <span class="fu">mean</span>(Height, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>`summarise()` has grouped output by 'Treatment'. You can override using the
 `.groups` argument.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Displaying mean soybean height for treatments across Weeks after application</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summary_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Displaying mean soybean height for treatments across Weeks after application</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summary_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 3
 # Groups:   Treatment [2]
@@ -261,25 +219,25 @@ The following object is masked from 'package:stats':
 </div>
 </div>
 </section>
-<section id="step-3-simple-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="step-3-simple-analysis">Step 3: Simple Analysis</h2>
+<section id="simple-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="simple-analysis">Simple Analysis</h2>
 <p><strong>Fitting models for simple linear Regression</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Linear Regression for Height</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Null Model</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>lm_height_1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment, <span class="at">data =</span> data)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial Model</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>lm_height_2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT, <span class="at">data =</span> data)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Full Model</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>lm_height_3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT <span class="sc">*</span> Field, <span class="at">data =</span> data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Linear Regression for Height</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Null Model</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>lm_height_1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment, <span class="at">data =</span> data)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial Model</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>lm_height_2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT, <span class="at">data =</span> data)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Full Model</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>lm_height_3 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="at">formula =</span> Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT <span class="sc">*</span> Field, <span class="at">data =</span> data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>Choosing the best model</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#ANOVA for differences in models </span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(lm_height_1, lm_height_2, lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#ANOVA for differences in models </span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(lm_height_1, lm_height_2, lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Analysis of Variance Table
 
@@ -293,19 +251,18 @@ Model 3: Height ~ Treatment * WAT * Field
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC to pick the best model</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(lm_height_1, lm_height_2, lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC to pick the best model</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(lm_height_1, lm_height_2, lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>            df      AIC
 lm_height_1  3 9450.838
 lm_height_2  5 8745.000
 lm_height_3 13 8315.810</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model lm_height_3 has the lowest AIC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p><strong>Best Model: Model 3 Full Model</strong></p>
+<p><strong>Model lm_height_3 has the lowest AIC score.</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -339,11 +296,11 @@ F-statistic: 165.6 on 11 and 1334 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <p><strong>The Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05</strong></p>
 </section>
-<section id="step-4-checking-model-assumptions" class="level2">
-<h2 class="anchored" data-anchor-id="step-4-checking-model-assumptions">Step 4: Checking Model Assumptions</h2>
+<section id="checking-model-assumptions" class="level2">
+<h2 class="anchored" data-anchor-id="checking-model-assumptions">Checking Model Assumptions</h2>
 <p>Using a QQ plot to look for non-normal distributions of the model’s plotted residuals</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(lm_height_3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -374,10 +331,289 @@ F-statistic: 165.6 on 11 and 1334 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <p><strong>Looking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine</strong></p>
-<p><strong>Also, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I’m currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.</strong></p>
+<p><strong>Also, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data.</strong></p>
 <p><strong>A better fitting model will provide more accurate results.</strong></p>
+</section>
+</section>
+<section id="continued-analysis-with-model-adjustments" class="level1">
+<h1>Continued Analysis with Model Adjustments</h1>
+<section id="mixed-effects-model" class="level2">
+<h2 class="anchored" data-anchor-id="mixed-effects-model">Mixed Effects Model</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial model without nested random effect</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>lmer_1 <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Height <span class="sc">~</span> Treatment <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field), <span class="at">data =</span> data)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Full model without nested  random effect</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>lmer_2 <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field), <span class="at">data =</span> data)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial model with nested random effects</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>lmer_3 <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Height <span class="sc">~</span> Treatment <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field<span class="sc">/</span>Plot), <span class="at">data =</span> data)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Full model with nested random effects</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>lmer_4 <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Height <span class="sc">~</span> Treatment <span class="sc">*</span> WAT <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field<span class="sc">/</span>Plot), <span class="at">data =</span> data)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Null model (only random effects)</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>lmer_null <span class="ot">&lt;-</span> <span class="fu">lmer</span>(Height <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field<span class="sc">/</span>Plot), <span class="at">data =</span> data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="model-comparison-using-anova" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison-using-anova">Model Comparison using ANOVA</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare models using likelihood ratio test</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>refitting model(s) with ML (instead of REML)</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data: data
+Models:
+lmer_1: Height ~ Treatment + (1 | Field)
+lmer_null: Height ~ 1 + (1 | Field/Plot)
+lmer_3: Height ~ Treatment + (1 | Field/Plot)
+lmer_2: Height ~ Treatment * WAT + (1 | Field)
+lmer_4: Height ~ Treatment * WAT + (1 | Field/Plot)
+          npar    AIC    BIC  logLik deviance    Chisq Df Pr(&gt;Chisq)    
+lmer_1       4 9261.2 9282.1 -4626.6   9253.2                           
+lmer_null    4 9222.8 9243.7 -4607.4   9214.8  38.3890  0               
+lmer_3       5 9224.1 9250.1 -4607.0   9214.1   0.7794  1     0.3773    
+lmer_2       6 8401.2 8432.5 -4194.6   8389.2 824.8355  1     &lt;2e-16 ***
+lmer_4       7 8306.3 8342.7 -4146.1   8292.3  96.9337  1     &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison-using-aic" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison-using-aic">Model comparison using AIC</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># AIC comparison</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          df      AIC
+lmer_1     4 9257.784
+lmer_2     6 8402.144
+lmer_3     5 9219.032
+lmer_4     7 8305.265
+lmer_null  4 9219.454</code></pre>
+</div>
+</div>
+</section>
+<section id="model-comparison-using-bic" class="level2">
+<h2 class="anchored" data-anchor-id="model-comparison-using-bic">Model comparison using BIC</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># BIC comparison</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">BIC</span>(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          df      BIC
+lmer_1     4 9278.604
+lmer_2     6 8433.373
+lmer_3     5 9245.056
+lmer_4     7 8341.700
+lmer_null  4 9240.274</code></pre>
+</div>
+</div>
+</section>
+<section id="summary-of-best-fitted-model" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-best-fitted-model">Summary of best fitted model!</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Full model with nested random effects</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmer_4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: Height ~ Treatment * WAT + (1 | Field/Plot)
+   Data: data
+
+REML criterion at convergence: 8291.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.8431 -0.6335 -0.0524  0.6243  3.7662 
+
+Random effects:
+ Groups     Name        Variance Std.Dev.
+ Plot:Field (Intercept)  3.508   1.873   
+ Field      (Intercept) 16.731   4.090   
+ Residual               26.699   5.167   
+Number of obs: 1346, groups:  Plot:Field, 20; Field, 3
+
+Fixed effects:
+                Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept)       9.8038     2.4730    2.1920   3.964   0.0499 *  
+Treatment1        0.2999     1.0114   27.4220   0.297   0.7691    
+WAT               3.7380     0.1493 1324.1124  25.042   &lt;2e-16 ***
+Treatment1:WAT    0.2634     0.2124 1324.7925   1.240   0.2152    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+            (Intr) Trtmn1 WAT   
+Treatment1  -0.204              
+WAT         -0.141  0.344       
+Trtmnt1:WAT  0.099 -0.486 -0.703</code></pre>
+</div>
+</div>
+<p><strong>Best Fitted Model is the full model with nested random effects</strong></p>
+</section>
+<section id="model-diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="model-diagnostics">Model Diagnostics</h2>
+<section id="extracting-model-residuals" class="level3">
+<h3 class="anchored" data-anchor-id="extracting-model-residuals">Extracting model residuals</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract residuals</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>residuals <span class="ot">&lt;-</span> <span class="fu">resid</span>(lmer_4)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>fitted <span class="ot">&lt;-</span> <span class="fu">fitted</span>(lmer_4)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot residuals vs fitted values</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fitted, residuals, <span class="at">xlab =</span> <span class="st">"Fitted values"</span>, <span class="at">ylab =</span> <span class="st">"Residuals"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Residuals vs Fitted"</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Height_Analysis_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Plotted Model Residuals vs Fitted Residuals deviation from a straight line indicates departure from normality assumption.</strong></p>
+<p><strong>This invalidates our model results.</strong></p>
+</section>
+<section id="normality-in-residuals" class="level3">
+<h3 class="anchored" data-anchor-id="normality-in-residuals">Normality in Residuals</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">qqnorm</span>(residuals)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">qqline</span>(residuals, <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Height_Analysis_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Deviation of Quantiles from a straight line at the ends indicate outliers.</strong></p>
+<p><strong>A log transformation may better fit the data to out model and allow our data to meet our models normality assumption.</strong></p>
+</section>
+</section>
+</section>
+<section id="response-log-transformation-and-further-analysis" class="level1">
+<h1>Response Log Transformation and Further Analysis</h1>
+<section id="mixed-effects-model-with-log-transformation" class="level2">
+<h2 class="anchored" data-anchor-id="mixed-effects-model-with-log-transformation">Mixed Effects Model with Log transformation</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the mixed-effects model with log transformation on best model</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>lmer_log <span class="ot">&lt;-</span> <span class="fu">lmer</span>(<span class="fu">log</span>(Height) <span class="sc">~</span> Treatment <span class="sc">*</span> WAT <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Field<span class="sc">/</span>Plot), <span class="at">data =</span> data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="aic-comparison-between-log-and-non-log-model" class="level2">
+<h2 class="anchored" data-anchor-id="aic-comparison-between-log-and-non-log-model">AIC comparison between log and non-log model</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(lmer_4, lmer_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         df       AIC
+lmer_4    7 8305.2655
+lmer_log  7  336.1356</code></pre>
+</div>
+</div>
+</section>
+<section id="bic-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="bic-comparison">BIC comparison</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BIC</span>(lmer_4, lmer_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         df       BIC
+lmer_4    7 8341.6997
+lmer_log  7  372.5698</code></pre>
+</div>
+</div>
+<p><strong>Log transformed model has drastically lower AIC and BIC.</strong></p>
+</section>
+<section id="summary-of-best-fitting-model" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-best-fitting-model">Summary of Best fitting model</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmer_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: log(Height) ~ Treatment * WAT + (1 | Field/Plot)
+   Data: data
+
+REML criterion at convergence: 322.1
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-7.7829 -0.5866  0.1130  0.6789  2.6415 
+
+Random effects:
+ Groups     Name        Variance Std.Dev.
+ Plot:Field (Intercept) 0.008894 0.09431 
+ Field      (Intercept) 0.046035 0.21456 
+ Residual               0.070420 0.26537 
+Number of obs: 1346, groups:  Plot:Field, 20; Field, 3
+
+Fixed effects:
+                Estimate Std. Error        df t value Pr(&gt;|t|)    
+(Intercept)    2.379e+00  1.293e-01 2.180e+00  18.397  0.00197 ** 
+Treatment1     2.344e-02  5.125e-02 2.788e+01   0.457  0.65099    
+WAT            1.954e-01  7.666e-03 1.324e+03  25.494  &lt; 2e-16 ***
+Treatment1:WAT 8.150e-03  1.091e-02 1.325e+03   0.747  0.45517    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+            (Intr) Trtmn1 WAT   
+Treatment1  -0.198              
+WAT         -0.138  0.349       
+Trtmnt1:WAT  0.097 -0.493 -0.703</code></pre>
+</div>
+</div>
+<p><strong>No model significance between treatment with tannin and height variable, but a positive influence.</strong></p>
+<p><strong>No model significance between tannin treatment and Week After Application, but a positive influence.</strong></p>
+<p><strong>Statistical Significance for Week After Treatment.</strong></p>
+</section>
+<section id="log-transformed-model-diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="log-transformed-model-diagnostics">Log Transformed Model Diagnostics</h2>
+<section id="extracting-model-residuals-1" class="level3">
+<h3 class="anchored" data-anchor-id="extracting-model-residuals-1">Extracting model residuals</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>residuals_log <span class="ot">&lt;-</span> <span class="fu">resid</span>(lmer_log)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>fitted_log <span class="ot">&lt;-</span> <span class="fu">fitted</span>(lmer_log)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot residuals vs fitted values</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fitted_log, residuals_log, <span class="at">xlab =</span> <span class="st">"Fitted values"</span>, <span class="at">ylab =</span> <span class="st">"Residuals"</span>,</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Residuals vs Fitted"</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Height_Analysis_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Log Transformation fixed normality assumption.</strong></p>
+</section>
+<section id="normality-in-residuals-1" class="level3">
+<h3 class="anchored" data-anchor-id="normality-in-residuals-1">Normality in Residuals</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">qqnorm</span>(residuals_log)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">qqline</span>(residuals_log, <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Height_Analysis_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Quantiles seem to be better fit with log transformed model.</strong></p>
+<p><strong>Log transformed mixed effects model seems to be the best fit model for analyzing the Height variable.</strong></p>
+<p><strong>I’ll reach out someone in the Statistics Department for confirmation.</strong></p>
 
 
+</section>
+</section>
 </section>
 
 </main> <!-- /main -->

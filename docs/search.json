@@ -4,7 +4,7 @@
     "href": "Height_Analysis.html",
     "title": "Height Data Analysis",
     "section": "",
-    "text": "Loading Appropriate Packages\n\nlibrary(tidyverse)\n\n── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──\n✔ dplyr     1.1.4     ✔ readr     2.1.5\n✔ forcats   1.0.0     ✔ stringr   1.5.1\n✔ ggplot2   3.5.1     ✔ tibble    3.2.1\n✔ lubridate 1.9.3     ✔ tidyr     1.3.1\n✔ purrr     1.0.2     \n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\nℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors\n\nlibrary(lme4)\n\nLoading required package: Matrix\n\nAttaching package: 'Matrix'\n\nThe following objects are masked from 'package:tidyr':\n\n    expand, pack, unpack\n\nlibrary(lmerTest)\n\n\nAttaching package: 'lmerTest'\n\nThe following object is masked from 'package:lme4':\n\n    lmer\n\nThe following object is masked from 'package:stats':\n\n    step\n\nlibrary(glmmTMB)\nlibrary(ggplot2)\n\n\n\n\n\n# Read the data\ndata &lt;- read.csv(\"Data.csv\", header=TRUE)\n\nSubsetting data to:\n1) Only include values from unenclosed plants.\n2) Convert predictor variables to factors with “levels”.\n3) Remove rows with missing values (missing values = dead plant or sampling error).\n\n# Subset to remove Enclosure values\ndata &lt;- data[data$Enclosure == \"0\", ]\n\n# Convert categorical variables to factors\ndata$Field &lt;- as.factor(data$Field)\ndata$Plot &lt;- as.factor(data$Plot)\ndata$Treatment &lt;- as.factor(data$Treatment)\ndata$Enclosure &lt;- as.factor(data$Enclosure)\n\n# Remove rows with missing Height values\ndata &lt;- data |&gt;\n  filter(!is.na(Height))"
+    "text": "# Read the data\ndata &lt;- read.csv(\"Data.csv\", header=TRUE)\n\nSub setting data to:\n1) Only include values from unenclosed plants.\n2) Convert predictor variables to factors with “levels”.\n3) Remove rows with missing values (missing values = dead plant or sampling error).\n\n# Subset to remove Enclosure values\ndata &lt;- data[data$Enclosure == \"0\", ]\n\n# Convert categorical variables to factors\ndata$Field &lt;- as.factor(data$Field)\ndata$Plot &lt;- as.factor(data$Plot)\ndata$Treatment &lt;- as.factor(data$Treatment)\ndata$Enclosure &lt;- as.factor(data$Enclosure)\n\n# Remove rows with missing Height values\ndata &lt;- data |&gt;\n  filter(!is.na(Height))\n\n\n\n\n\nCalculating and Displaying mean soybean height for treatments across Weeks after application.\n\n# Calculate mean Height for each Treatment and WAT combination\nsummary_data &lt;- data |&gt;\n  group_by(Treatment, WAT) |&gt;\n  summarise(mean_height = mean(Height, na.rm = TRUE))\n\n`summarise()` has grouped output by 'Treatment'. You can override using the\n`.groups` argument.\n\n# Displaying mean soybean height for treatments across Weeks after application\nprint(summary_data)\n\n# A tibble: 10 × 3\n# Groups:   Treatment [2]\n   Treatment   WAT mean_height\n   &lt;fct&gt;     &lt;int&gt;       &lt;dbl&gt;\n 1 0             0        12.1\n 2 0             1        14.2\n 3 0             2        15.7\n 4 0             3        20.1\n 5 0             4        26.9\n 6 1             0        12.1\n 7 1             1        14.9\n 8 1             2        16.9\n 9 1             3        21.0\n10 1             4        28.4\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nFitting models for simple linear Regression\n\n# Linear Regression for Height\n\n# Null Model\nlm_height_1 &lt;- lm(formula = Height ~ Treatment, data = data)\n\n# Partial Model\nlm_height_2 &lt;- lm(formula = Height ~ Treatment * WAT, data = data)\n\n# Full Model\nlm_height_3 &lt;- lm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nChoosing the best model\n\n#ANOVA for differences in models \nanova(lm_height_1, lm_height_2, lm_height_3)\n\nAnalysis of Variance Table\n\nModel 1: Height ~ Treatment\nModel 2: Height ~ Treatment * WAT\nModel 3: Height ~ Treatment * WAT * Field\n  Res.Df   RSS Df Sum of Sq       F    Pr(&gt;F)    \n1   1344 87902                                   \n2   1342 51876  2     36026 644.794 &lt; 2.2e-16 ***\n3   1334 37267  8     14609  65.368 &lt; 2.2e-16 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n# AIC to pick the best model\nAIC(lm_height_1, lm_height_2, lm_height_3)\n\n            df      AIC\nlm_height_1  3 9450.838\nlm_height_2  5 8745.000\nlm_height_3 13 8315.810\n\n\nModel lm_height_3 has the lowest AIC score.\n\nsummary(lm_height_3)\n\n\nCall:\nlm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nResiduals:\n     Min       1Q   Median       3Q      Max \n-17.2903  -3.2155  -0.0876   3.1029  19.7837 \n\nCoefficients:\n                      Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)           12.31979    0.74626  16.509  &lt; 2e-16 ***\nTreatment1            -0.01612    1.05537  -0.015 0.987814    \nWAT                    4.26400    0.27667  15.412  &lt; 2e-16 ***\nField2                -3.02230    1.18086  -2.559 0.010594 *  \nField3                -3.25640    0.94515  -3.445 0.000588 ***\nTreatment1:WAT         0.93382    0.39127   2.387 0.017142 *  \nTreatment1:Field2      1.09813    1.66934   0.658 0.510764    \nTreatment1:Field3      0.16590    1.33813   0.124 0.901351    \nWAT:Field2            -2.10073    0.43895  -4.786 1.89e-06 ***\nWAT:Field3            -0.20726    0.35166  -0.589 0.555706    \nTreatment1:WAT:Field2 -0.82662    0.61972  -1.334 0.182472    \nTreatment1:WAT:Field3 -0.98977    0.49974  -1.981 0.047844 *  \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 5.285 on 1334 degrees of freedom\nMultiple R-squared:  0.5772,    Adjusted R-squared:  0.5738 \nF-statistic: 165.6 on 11 and 1334 DF,  p-value: &lt; 2.2e-16\n\n\nThe Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05\n\n\n\nUsing a QQ plot to look for non-normal distributions of the model’s plotted residuals\n\nplot(lm_height_3)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLooking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine\nAlso, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data.\nA better fitting model will provide more accurate results."
   },
   {
     "objectID": "Height_Analysis.html#step-1-loading-and-subsetting-data",
@@ -47,5 +47,110 @@
     "title": "Height Data Analysis",
     "section": "Step 4: Checking Model Assumptions",
     "text": "Step 4: Checking Model Assumptions\nUsing a QQ plot to look for non-normal distributions of the model’s plotted residuals\n\nplot(lm_height_3)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLooking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine\nAlso, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I’m currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.\nA better fitting model will provide more accurate results."
+  },
+  {
+    "objectID": "Height_Analysis.html#loading-and-subsetting-data",
+    "href": "Height_Analysis.html#loading-and-subsetting-data",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "# Read the data\ndata &lt;- read.csv(\"Data.csv\", header=TRUE)\n\nSub setting data to:\n1) Only include values from unenclosed plants.\n2) Convert predictor variables to factors with “levels”.\n3) Remove rows with missing values (missing values = dead plant or sampling error).\n\n# Subset to remove Enclosure values\ndata &lt;- data[data$Enclosure == \"0\", ]\n\n# Convert categorical variables to factors\ndata$Field &lt;- as.factor(data$Field)\ndata$Plot &lt;- as.factor(data$Plot)\ndata$Treatment &lt;- as.factor(data$Treatment)\ndata$Enclosure &lt;- as.factor(data$Enclosure)\n\n# Remove rows with missing Height values\ndata &lt;- data |&gt;\n  filter(!is.na(Height))"
+  },
+  {
+    "objectID": "Height_Analysis.html#exploratory-data-analysis",
+    "href": "Height_Analysis.html#exploratory-data-analysis",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "Calculating and Displaying mean soybean height for treatments across Weeks after application.\n\n# Calculate mean Height for each Treatment and WAT combination\nsummary_data &lt;- data |&gt;\n  group_by(Treatment, WAT) |&gt;\n  summarise(mean_height = mean(Height, na.rm = TRUE))\n\n`summarise()` has grouped output by 'Treatment'. You can override using the\n`.groups` argument.\n\n# Displaying mean soybean height for treatments across Weeks after application\nprint(summary_data)\n\n# A tibble: 10 × 3\n# Groups:   Treatment [2]\n   Treatment   WAT mean_height\n   &lt;fct&gt;     &lt;int&gt;       &lt;dbl&gt;\n 1 0             0        12.1\n 2 0             1        14.2\n 3 0             2        15.7\n 4 0             3        20.1\n 5 0             4        26.9\n 6 1             0        12.1\n 7 1             1        14.9\n 8 1             2        16.9\n 9 1             3        21.0\n10 1             4        28.4"
+  },
+  {
+    "objectID": "Height_Analysis.html#simple-analysis",
+    "href": "Height_Analysis.html#simple-analysis",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "Fitting models for simple linear Regression\n\n# Linear Regression for Height\n\n# Null Model\nlm_height_1 &lt;- lm(formula = Height ~ Treatment, data = data)\n\n# Partial Model\nlm_height_2 &lt;- lm(formula = Height ~ Treatment * WAT, data = data)\n\n# Full Model\nlm_height_3 &lt;- lm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nChoosing the best model\n\n#ANOVA for differences in models \nanova(lm_height_1, lm_height_2, lm_height_3)\n\nAnalysis of Variance Table\n\nModel 1: Height ~ Treatment\nModel 2: Height ~ Treatment * WAT\nModel 3: Height ~ Treatment * WAT * Field\n  Res.Df   RSS Df Sum of Sq       F    Pr(&gt;F)    \n1   1344 87902                                   \n2   1342 51876  2     36026 644.794 &lt; 2.2e-16 ***\n3   1334 37267  8     14609  65.368 &lt; 2.2e-16 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n# AIC to pick the best model\nAIC(lm_height_1, lm_height_2, lm_height_3)\n\n            df      AIC\nlm_height_1  3 9450.838\nlm_height_2  5 8745.000\nlm_height_3 13 8315.810\n\n\nModel lm_height_3 has the lowest AIC score.\n\nsummary(lm_height_3)\n\n\nCall:\nlm(formula = Height ~ Treatment * WAT * Field, data = data)\n\nResiduals:\n     Min       1Q   Median       3Q      Max \n-17.2903  -3.2155  -0.0876   3.1029  19.7837 \n\nCoefficients:\n                      Estimate Std. Error t value Pr(&gt;|t|)    \n(Intercept)           12.31979    0.74626  16.509  &lt; 2e-16 ***\nTreatment1            -0.01612    1.05537  -0.015 0.987814    \nWAT                    4.26400    0.27667  15.412  &lt; 2e-16 ***\nField2                -3.02230    1.18086  -2.559 0.010594 *  \nField3                -3.25640    0.94515  -3.445 0.000588 ***\nTreatment1:WAT         0.93382    0.39127   2.387 0.017142 *  \nTreatment1:Field2      1.09813    1.66934   0.658 0.510764    \nTreatment1:Field3      0.16590    1.33813   0.124 0.901351    \nWAT:Field2            -2.10073    0.43895  -4.786 1.89e-06 ***\nWAT:Field3            -0.20726    0.35166  -0.589 0.555706    \nTreatment1:WAT:Field2 -0.82662    0.61972  -1.334 0.182472    \nTreatment1:WAT:Field3 -0.98977    0.49974  -1.981 0.047844 *  \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nResidual standard error: 5.285 on 1334 degrees of freedom\nMultiple R-squared:  0.5772,    Adjusted R-squared:  0.5738 \nF-statistic: 165.6 on 11 and 1334 DF,  p-value: &lt; 2.2e-16\n\n\nThe Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05"
+  },
+  {
+    "objectID": "Height_Analysis.html#checking-model-assumptions",
+    "href": "Height_Analysis.html#checking-model-assumptions",
+    "title": "Height Data Analysis",
+    "section": "",
+    "text": "Using a QQ plot to look for non-normal distributions of the model’s plotted residuals\n\nplot(lm_height_3)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nLooking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine\nAlso, I don’t believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data.\nA better fitting model will provide more accurate results."
+  },
+  {
+    "objectID": "Height_Analysis.html#mixed-effects-model",
+    "href": "Height_Analysis.html#mixed-effects-model",
+    "title": "Height Data Analysis",
+    "section": "Mixed Effects Model",
+    "text": "Mixed Effects Model\n\n# Partial model without nested random effect\nlmer_1 &lt;- lmer(Height ~ Treatment + (1|Field), data = data)\n\n# Full model without nested  random effect\nlmer_2 &lt;- lmer(Height ~ Treatment * WAT + (1|Field), data = data)\n\n# Partial model with nested random effects\nlmer_3 &lt;- lmer(Height ~ Treatment + (1|Field/Plot), data = data)\n\n# Full model with nested random effects\nlmer_4 &lt;- lmer(Height ~ Treatment * WAT + (1|Field/Plot), data = data)\n\n# Null model (only random effects)\nlmer_null &lt;- lmer(Height ~ 1 + (1|Field/Plot), data = data)"
+  },
+  {
+    "objectID": "Height_Analysis.html#model-comparison-using-anova",
+    "href": "Height_Analysis.html#model-comparison-using-anova",
+    "title": "Height Data Analysis",
+    "section": "Model Comparison using ANOVA",
+    "text": "Model Comparison using ANOVA\n\n# Compare models using likelihood ratio test\nanova(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)\n\nrefitting model(s) with ML (instead of REML)\n\n\nData: data\nModels:\nlmer_1: Height ~ Treatment + (1 | Field)\nlmer_null: Height ~ 1 + (1 | Field/Plot)\nlmer_3: Height ~ Treatment + (1 | Field/Plot)\nlmer_2: Height ~ Treatment * WAT + (1 | Field)\nlmer_4: Height ~ Treatment * WAT + (1 | Field/Plot)\n          npar    AIC    BIC  logLik deviance    Chisq Df Pr(&gt;Chisq)    \nlmer_1       4 9261.2 9282.1 -4626.6   9253.2                           \nlmer_null    4 9222.8 9243.7 -4607.4   9214.8  38.3890  0               \nlmer_3       5 9224.1 9250.1 -4607.0   9214.1   0.7794  1     0.3773    \nlmer_2       6 8401.2 8432.5 -4194.6   8389.2 824.8355  1     &lt;2e-16 ***\nlmer_4       7 8306.3 8342.7 -4146.1   8292.3  96.9337  1     &lt;2e-16 ***\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1"
+  },
+  {
+    "objectID": "Height_Analysis.html#model-comparison-using-aic",
+    "href": "Height_Analysis.html#model-comparison-using-aic",
+    "title": "Height Data Analysis",
+    "section": "Model comparison using AIC",
+    "text": "Model comparison using AIC\n\n# AIC comparison\nAIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)\n\n          df      AIC\nlmer_1     4 9257.784\nlmer_2     6 8402.144\nlmer_3     5 9219.032\nlmer_4     7 8305.265\nlmer_null  4 9219.454"
+  },
+  {
+    "objectID": "Height_Analysis.html#model-comparison-using-bic",
+    "href": "Height_Analysis.html#model-comparison-using-bic",
+    "title": "Height Data Analysis",
+    "section": "Model comparison using BIC",
+    "text": "Model comparison using BIC\n\n# BIC comparison\nBIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)\n\n          df      BIC\nlmer_1     4 9278.604\nlmer_2     6 8433.373\nlmer_3     5 9245.056\nlmer_4     7 8341.700\nlmer_null  4 9240.274"
+  },
+  {
+    "objectID": "Height_Analysis.html#summary-of-best-fitted-model",
+    "href": "Height_Analysis.html#summary-of-best-fitted-model",
+    "title": "Height Data Analysis",
+    "section": "Summary of best fitted model!",
+    "text": "Summary of best fitted model!\n\n# Full model with nested random effects\nsummary(lmer_4)\n\nLinear mixed model fit by REML. t-tests use Satterthwaite's method [\nlmerModLmerTest]\nFormula: Height ~ Treatment * WAT + (1 | Field/Plot)\n   Data: data\n\nREML criterion at convergence: 8291.3\n\nScaled residuals: \n    Min      1Q  Median      3Q     Max \n-2.8431 -0.6335 -0.0524  0.6243  3.7662 \n\nRandom effects:\n Groups     Name        Variance Std.Dev.\n Plot:Field (Intercept)  3.508   1.873   \n Field      (Intercept) 16.731   4.090   \n Residual               26.699   5.167   \nNumber of obs: 1346, groups:  Plot:Field, 20; Field, 3\n\nFixed effects:\n                Estimate Std. Error        df t value Pr(&gt;|t|)    \n(Intercept)       9.8038     2.4730    2.1920   3.964   0.0499 *  \nTreatment1        0.2999     1.0114   27.4220   0.297   0.7691    \nWAT               3.7380     0.1493 1324.1124  25.042   &lt;2e-16 ***\nTreatment1:WAT    0.2634     0.2124 1324.7925   1.240   0.2152    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nCorrelation of Fixed Effects:\n            (Intr) Trtmn1 WAT   \nTreatment1  -0.204              \nWAT         -0.141  0.344       \nTrtmnt1:WAT  0.099 -0.486 -0.703\n\n\nBest Fitted Model is the full model with nested random effects"
+  },
+  {
+    "objectID": "Height_Analysis.html#model-diagnostics",
+    "href": "Height_Analysis.html#model-diagnostics",
+    "title": "Height Data Analysis",
+    "section": "Model Diagnostics",
+    "text": "Model Diagnostics\n\nExtracting model residuals\n\n# Extract residuals\nresiduals &lt;- resid(lmer_4)\nfitted &lt;- fitted(lmer_4)\n\n# Plot residuals vs fitted values\nplot(fitted, residuals, xlab = \"Fitted values\", ylab = \"Residuals\",\n     main = \"Residuals vs Fitted\")\nabline(h = 0, col = \"red\")\n\n\n\n\n\n\n\n\nPlotted Model Residuals vs Fitted Residuals deviation from a straight line indicates departure from normality assumption.\nThis invalidates our model results.\n\n\nNormality in Residuals\n\nqqnorm(residuals)\nqqline(residuals, col = \"red\")\n\n\n\n\n\n\n\n\nDeviation of Quantiles from a straight line at the ends indicate outliers.\nA log transformation may better fit the data to out model and allow our data to meet our models normality assumption."
+  },
+  {
+    "objectID": "Height_Analysis.html#mixed-effects-model-with-log-transformation",
+    "href": "Height_Analysis.html#mixed-effects-model-with-log-transformation",
+    "title": "Height Data Analysis",
+    "section": "Mixed Effects Model with Log transformation",
+    "text": "Mixed Effects Model with Log transformation\n\n# Fit the mixed-effects model with log transformation on best model\nlmer_log &lt;- lmer(log(Height) ~ Treatment * WAT + (1|Field/Plot), data = data)"
+  },
+  {
+    "objectID": "Height_Analysis.html#aic-comparison-between-log-and-non-log-model",
+    "href": "Height_Analysis.html#aic-comparison-between-log-and-non-log-model",
+    "title": "Height Data Analysis",
+    "section": "AIC comparison between log and non-log model",
+    "text": "AIC comparison between log and non-log model\n\nAIC(lmer_4, lmer_log)\n\n         df       AIC\nlmer_4    7 8305.2655\nlmer_log  7  336.1356"
+  },
+  {
+    "objectID": "Height_Analysis.html#bic-comparison",
+    "href": "Height_Analysis.html#bic-comparison",
+    "title": "Height Data Analysis",
+    "section": "BIC comparison",
+    "text": "BIC comparison\n\nBIC(lmer_4, lmer_log)\n\n         df       BIC\nlmer_4    7 8341.6997\nlmer_log  7  372.5698\n\n\nLog transformed model has drastically lower AIC and BIC."
+  },
+  {
+    "objectID": "Height_Analysis.html#summary-of-best-fitting-model",
+    "href": "Height_Analysis.html#summary-of-best-fitting-model",
+    "title": "Height Data Analysis",
+    "section": "Summary of Best fitting model",
+    "text": "Summary of Best fitting model\n\nsummary(lmer_log)\n\nLinear mixed model fit by REML. t-tests use Satterthwaite's method [\nlmerModLmerTest]\nFormula: log(Height) ~ Treatment * WAT + (1 | Field/Plot)\n   Data: data\n\nREML criterion at convergence: 322.1\n\nScaled residuals: \n    Min      1Q  Median      3Q     Max \n-7.7829 -0.5866  0.1130  0.6789  2.6415 \n\nRandom effects:\n Groups     Name        Variance Std.Dev.\n Plot:Field (Intercept) 0.008894 0.09431 \n Field      (Intercept) 0.046035 0.21456 \n Residual               0.070420 0.26537 \nNumber of obs: 1346, groups:  Plot:Field, 20; Field, 3\n\nFixed effects:\n                Estimate Std. Error        df t value Pr(&gt;|t|)    \n(Intercept)    2.379e+00  1.293e-01 2.180e+00  18.397  0.00197 ** \nTreatment1     2.344e-02  5.125e-02 2.788e+01   0.457  0.65099    \nWAT            1.954e-01  7.666e-03 1.324e+03  25.494  &lt; 2e-16 ***\nTreatment1:WAT 8.150e-03  1.091e-02 1.325e+03   0.747  0.45517    \n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\nCorrelation of Fixed Effects:\n            (Intr) Trtmn1 WAT   \nTreatment1  -0.198              \nWAT         -0.138  0.349       \nTrtmnt1:WAT  0.097 -0.493 -0.703\n\n\nNo model significance between treatment with tannin and height variable, but a positive influence.\nNo model significance between tannin treatment and Week After Application, but a positive influence.\nStatistical Significance for Week After Treatment."
+  },
+  {
+    "objectID": "Height_Analysis.html#log-transformed-model-diagnostics",
+    "href": "Height_Analysis.html#log-transformed-model-diagnostics",
+    "title": "Height Data Analysis",
+    "section": "Log Transformed Model Diagnostics",
+    "text": "Log Transformed Model Diagnostics\n\nExtracting model residuals\n\nresiduals_log &lt;- resid(lmer_log)\nfitted_log &lt;- fitted(lmer_log)\n\n# Plot residuals vs fitted values\nplot(fitted_log, residuals_log, xlab = \"Fitted values\", ylab = \"Residuals\",\n     main = \"Residuals vs Fitted\")\nabline(h = 0, col = \"red\")\n\n\n\n\n\n\n\n\nLog Transformation fixed normality assumption.\n\n\nNormality in Residuals\n\nqqnorm(residuals_log)\nqqline(residuals_log, col = \"red\")\n\n\n\n\n\n\n\n\nQuantiles seem to be better fit with log transformed model.\nLog transformed mixed effects model seems to be the best fit model for analyzing the Height variable.\nI’ll reach out someone in the Statistics Department for confirmation."
   }
 ]
