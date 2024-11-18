@@ -4,18 +4,20 @@ format: html
 editor: visual
 ---
 
-## Step 1: Loading and Subsetting Data
+# Initial Height Analysis
 
-### IGNORE OUTPUT FROM LOADING PACKAGES
-
-**Loading Appropriate Packages**
+## Loading and Subsetting Data
 
 ```{r}
+#| echo: true
+#| include: false
 library(tidyverse)
 library(lme4)
 library(lmerTest)
 library(glmmTMB)
 library(ggplot2)
+library(lattice)
+library(nlme)
 ```
 
 ### Reading in Data Source
@@ -27,11 +29,11 @@ data <- read.csv("Data.csv", header=TRUE)
 
 **Subsetting data to:**
 
-**1)  Only include values from unenclosed plants.**
+**1) Only include values from unenclosed plants.**
 
-**2)  Convert predictor variables to factors with "levels".**
+**2) Convert predictor variables to factors with "levels".**
 
-**3)  Remove rows with missing values (missing values = dead plant or sampling error).**
+**3) Remove rows with missing values (missing values = dead plant or sampling error).**
 
 ```{r}
 # Subset to remove Enclosure values
@@ -48,7 +50,7 @@ data <- data |>
   filter(!is.na(Height))
 ```
 
-## Step 2: Exploratory Data Analysis
+## Exploratory Data Analysis
 
 **Calculating and Displaying mean soybean height for treatments across Weeks after application.**
 
@@ -96,7 +98,7 @@ ggplot(data, aes(x = Treatment, y = Height, fill = Treatment)) +
   )
 ```
 
-## Step 3: Simple Analysis
+## Simple Analysis
 
 **Fitting models for simple linear Regression**
 
@@ -121,11 +123,9 @@ anova(lm_height_1, lm_height_2, lm_height_3)
 
 # AIC to pick the best model
 AIC(lm_height_1, lm_height_2, lm_height_3)
-
-# Model lm_height_3 has the lowest AIC
 ```
 
-**Best Model: Model 3 Full Model**
+**Model lm_height_3 has the lowest AIC score.**
 
 ```{r}
 summary(lm_height_3)
@@ -133,7 +133,7 @@ summary(lm_height_3)
 
 **The Interaction between Treatment1 (Tannin application) and WAT (Week after Treatment) is significant at alpha = 0.05**
 
-## Step 4: Checking Model Assumptions
+## Checking Model Assumptions
 
 Using a QQ plot to look for non-normal distributions of the model's plotted residuals
 
@@ -143,6 +143,148 @@ plot(lm_height_3)
 
 **Looking at the plotted Q-Q Residuals, data does appear to be slightly non-normal. With the size of out data set, non-normality is probably fine**
 
-**Also, I don't believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data. I'm currently reading up on Mixed Effects models that will allow us to fit a regression model with a blocking factor.**
+**Also, I don't believe that simple linear regression is appropriate model for out data. Because of the three fields design plan, we should switch the variable Field to a random factor to block the data.**
 
 **A better fitting model will provide more accurate results.**
+
+# Continued Analysis with Model Adjustments
+
+## Mixed Effects Model
+
+```{r}
+# Partial model without nested random effect
+lmer_1 <- lmer(Height ~ Treatment + (1|Field), data = data)
+
+# Full model without nested  random effect
+lmer_2 <- lmer(Height ~ Treatment * WAT + (1|Field), data = data)
+
+# Partial model with nested random effects
+lmer_3 <- lmer(Height ~ Treatment + (1|Field/Plot), data = data)
+
+# Full model with nested random effects
+lmer_4 <- lmer(Height ~ Treatment * WAT + (1|Field/Plot), data = data)
+
+# Null model (only random effects)
+lmer_null <- lmer(Height ~ 1 + (1|Field/Plot), data = data)
+```
+
+## Model Comparison using ANOVA
+
+```{r}
+# Compare models using likelihood ratio test
+anova(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+```
+
+## Model comparison using AIC
+
+```{r}
+# AIC comparison
+AIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+```
+
+## Model comparison using BIC
+
+```{r}
+# BIC comparison
+BIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+```
+
+## Summary of best fitted model!
+
+```{r}
+# Full model with nested random effects
+summary(lmer_4)
+```
+**Best Fitted Model is the full model with nested random effects**
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+# Extract residuals
+residuals <- resid(lmer_4)
+fitted <- fitted(lmer_4)
+
+# Plot residuals vs fitted values
+plot(fitted, residuals, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+**Plotted Model Residuals vs Fitted Residuals deviation from a straight line indicates departure from normality assumption.**
+
+**This invalidates our model results.**
+
+### Normality in Residuals
+
+```{r}
+qqnorm(residuals)
+qqline(residuals, col = "red")
+```
+
+**Deviation of Quantiles from a straight line at the ends indicate outliers.**
+
+**A log transformation may better fit the data to out model and allow our data to meet our models normality assumption.**
+
+# Response Log Transformation and Further Analysis
+
+## Mixed Effects Model with Log transformation
+
+```{r}
+# Fit the mixed-effects model with log transformation on best model
+lmer_log <- lmer(log(Height) ~ Treatment * WAT + (1|Field/Plot), data = data)
+```
+
+## AIC comparison between log and non-log model
+
+```{r}
+AIC(lmer_4, lmer_log)
+```
+
+## BIC comparison
+
+```{r}
+BIC(lmer_4, lmer_log)
+```
+
+**Log transformed model has drastically lower AIC and BIC.**
+
+## Summary of Best fitting model 
+
+```{r}
+summary(lmer_log)
+```
+
+**No model significance between treatment with tannin and height variable, but a positive influence.**
+
+**No model significance between tannin treatment and Week After Application, but a positive influence.**
+
+**Statistical Significance for Week After Treatment.**
+
+## Log Transformed Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+residuals_log <- resid(lmer_log)
+fitted_log <- fitted(lmer_log)
+
+# Plot residuals vs fitted values
+plot(fitted_log, residuals_log, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+**Log Transformation fixed normality assumption.**
+
+### Normality in Residuals
+
+```{r}
+qqnorm(residuals_log)
+qqline(residuals_log, col = "red")
+```
+
+**Quantiles seem to be better fit with log transformed model.**
+
+**Log transformed mixed effects model seems to be the best fit model for analyzing the Height variable.**
