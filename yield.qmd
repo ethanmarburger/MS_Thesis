@@ -8,6 +8,17 @@ editor: visual
 
 Looking at differences in yield (bushels/acre) based on tannin concentration (0%:control or 10%:treatment).
 
+Response Variable: 
+
+- Yield (bushles/acre)
+
+Predictor Variables:
+
+- Tannin.Concentration (0: Control, 1: Tannins)
+- Plot (1-20)
+
+Below is our process of fitting our data to the best possible model.
+
 # Initial Yield Analysis
 
 ## Loading Data
@@ -77,7 +88,7 @@ AIC(mem_yield_1, mem_yield_2, mem_yield_3)
 ## Summary of best Model
 
 ```{r}
-summary(lm_yield_2)
+summary(mem_yield_2)
 ```
 
 **Model indicates that differences in yield based on tannin concentrations are insignificant.**

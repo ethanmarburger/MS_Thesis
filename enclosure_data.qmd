@@ -1,5 +1,5 @@
 ---
-title: "Enclosure"
+title: "Enclosure Analysis"
 format: html
 editor: visual
 ---
@@ -7,6 +7,18 @@ editor: visual
 # Analysis info
 
 Looking at differences in mean soybean height between plants protected from browsing to those unprotected from browsing. Individuals exposed to browsing were exposed with variable treatment concentrations (0:control or 1:tannins). Additionally we investigated differences in mean height over time incorporating WAT (Week after application) as an additional predictor variable. Plot and Field as were included as nested random effects.
+
+Response Variable: 
+
+- Mean Height (cm)
+
+Predictor Variables:
+
+- Treatment (0: Control, 1: Tannins)
+- WAT (Week After Application: 1-4)
+- Enclosure (0: Not Enclosed, 1: Enclosed)
+- Plot (1-20)
+- Field (1-20)
 
 Below is our process of fitting our data to the best possible model.
 
@@ -65,7 +77,7 @@ summary_data <- data |>
   summarise(mean_height = mean(Height, na.rm = TRUE))
 
 # Displaying mean soybean height for treatments across Weeks after application
-print(data)
+head(data)
 ```
 
 ## Calculating standard error for each group
@@ -166,4 +178,4 @@ summary(anova_mean_height)
 
 ## Continuing analysis for other response variables
 
-[Click here for the analysis on Browsing Damage](Percent_Damage.html)
+### [Click here for the analysis on Browsing Damage](Percent_Damage.html)

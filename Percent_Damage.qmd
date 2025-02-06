@@ -10,6 +10,17 @@ Looking at differences in soybean browsing percent damage based on Treatment (0:
 
 Percent Damage variable calculation = total number of petioles (leaf stems) supporting leaves damaged by deer divided by the total number of petioles on the plant
 
+Response Variable: 
+
+- Percent Damage
+
+Predictor Variables:
+
+- Treatment (0: Control, 1: Tannins)
+- WAT (Week After Application: 1-4)
+- Plot (1-20)
+- Field (1-20)
+
 Below is our process of fitting our data to the best possible model.
 
 # Initial Percent Damage Analysis
@@ -481,11 +492,7 @@ sim_res <- simulateResiduals(fittedModel = zi_pois_pd_outliers)
 plot(sim_res)
 ```
 
-```{r}
-# Test for overdispersion
-# Errors in test?
-testDispersion(sim_res)
-```
+**Test for over dispersion failed, issues with code...**
 
 ## Incoorporating binary variable to account for added plants after week 2
 
@@ -534,4 +541,4 @@ qqline(residuals_zi_pois_adjusted, col = "red")
 
 ## Continuing analysis for other response variables
 
-[Click here for the analysis on white-tailed deer observations among plots](camera.html)
+### [Click here for the analysis on white-tailed deer observations among plots](camera.html)

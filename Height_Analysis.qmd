@@ -8,6 +8,17 @@ editor: visual
 
 Looking at differences in soybean height based on Treatment (0:control or 1:tannins) over time. We included WAT (Week after application) as an additional predictor variable and Plot and Field as nested random effects.
 
+Response Variable: 
+
+- Height (cm)
+
+Predictor Variables:
+
+- Treatment (0: Control, 1: Tannins)
+- WAT (Week After Application: 1-4)
+- Plot (1-20)
+- Field (1-20)
+
 Below is our process of fitting our data to the best possible model.
 
 # Initial Height Analysis
@@ -350,7 +361,7 @@ qqline(residuals_log, col = "red")
 
 **Quantiles from log transformation don't fit the QQ line as well but the drastically lower AIC score indicates better model fit.**
 
-## Incoorporating binary variable to account for added plants after week 2
+## Incorporating binary variable to account for added plants after week 2
 
 ```{r}
 data_subset$num_plants_change <- ifelse(data_subset$WAT >= 2, 1, 0)  
@@ -397,4 +408,4 @@ qqline(residuals_adj, col = "red")
 
 ## Continuing analysis for other response variables
 
-[Click here for analysis comparing soybean heights between plant protected from deer browsing and those exposed to browsing](enclosure_data.html)
+### [Click here for analysis comparing soybean heights between plant protected from deer browsing and those exposed to browsing](enclosure_data.html)
