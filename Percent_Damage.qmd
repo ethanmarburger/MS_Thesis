@@ -4,23 +4,534 @@ format: html
 editor: visual
 ---
 
-## Quarto
+# Analysis info
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+Looking at differences in soybean browsing percent damage based on Treatment (0:control or 1:tannins) over time. We included WAT (Week after application) as a predictor variable and Plot and Field as nested random effects.
 
-## Running Code
+Percent Damage variable calculation = total number of petioles (leaf stems) supporting leaves damaged by deer divided by the total number of petioles on the plant
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+Below is our process of fitting our data to the best possible model.
+
+# Initial Percent Damage Analysis
+
+## Loading and Subsetting Data
 
 ```{r}
-1 + 1
+#| echo: true
+#| include: false
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(glmmTMB)
+library(ggplot2)
+library(lattice)
+library(nlme)
+library(DHARMa)
+library(ggnewscale)
 ```
 
-You can add options to executable code like this
+### Reading in Data Source
+
+```{r}
+# Read the data
+data <- read.csv("Data.csv", header=TRUE)
+```
+
+**Subsetting data to:**
+
+**1) Only include observations from plants exposed to browsing.**
+
+**2) Convert predictor variables to factors with "levels".**
+
+**3) Remove rows with missing Height values (missing values = dead plant or sampling error).**
+
+**4) Only include measurements from weeks 1 through 4**
+
+```{r}
+# Subset to remove Enclosure values
+data <- data[data$Enclosure == "0", ]
+
+# Convert categorical variables to factors
+data$Field <- as.factor(data$Field)
+data$Plot <- as.factor(data$Plot)
+data$Treatment <- as.factor(data$Treatment)
+data$Enclosure <- as.factor(data$Enclosure)
+
+# Remove rows with missing Height values
+# Remove values where WAT = 0
+data <- data |>
+  filter(!is.na(Height)) |>
+  filter(WAT != 0)
+```
+
+## Exploratory Data Analysis
+
+Calculating and displaying mean soybean Percent Damage for treatments across weeks after application.
+
+```{r}
+# Calculate mean Percent Height for each Treatment and WAT combination
+summary_data <- data |>
+  group_by(Treatment, WAT) |>
+  summarise(mean_pd = mean(PercentDamage, na.rm = TRUE))
+
+# Displaying mean soybean height for treatments across Weeks after application
+print(summary_data)
+```
+
+### Plotting "Mean Height by Treatment Over Time"
 
 ```{r}
 #| echo: false
-2 * 2
+# Create a plot
+ggplot(summary_data, aes(x = WAT, y = mean_pd, color = Treatment, group = Treatment)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Mean Percent Damage by Treatment over Time",
+       x = "Weeks After Treatment",
+       y = "Mean Percent Damage") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.75, face = "bold"))
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+### Side by side bar plots
+
+```{r}
+ggplot(summary_data, aes(x = as.factor(WAT), y = mean_pd, fill = factor(Treatment, levels = c(0, 1), labels = c("0%", "10%")), group = Treatment)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.6) + # Side-by-side bars
+  # Black outline trendlines (not included in the legend)
+  geom_smooth(
+    aes(group = Treatment),
+    method = "lm",
+    se = FALSE,
+    size = 2, # Thicker black line for the outline
+    color = "black",
+    show.legend = FALSE  # Remove trendlines from the legend
+  ) +
+  # Colored trendlines (not included in the legend)
+  geom_smooth(
+    aes(color = factor(Treatment, levels = c(0, 1), labels = c("0%", "10%"))),
+    method = "lm",
+    se = FALSE,
+    size = 0.8, # Slightly thinner line for the color
+    show.legend = FALSE  # Remove trendlines from the legend
+  ) +
+  labs(
+    x = "Weeks After Tannin Application",
+    y = "Mean Percent Soybean Damage",
+    fill = "Tannin Concentration"  # Legend title update
+  ) +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),  # Center title and bold it
+    plot.margin = margin(t = 20, b = 20, l = 20, r = 20),  # Increase space between the figure and the edges
+    axis.text.x = element_text(size = 12)  # Adjust x-axis text size if necessary
+  )
+
+```
+
+Decrease in mean of untreated (Treatment = 0) Percent Damage vales after week 2 because of the rate of browsing is lower then the rate of stem growth. For example, a plant in week one may experience browsing on 2/7 stems resulting in 28% of total stems browsed but in week two the same plant may have grown two new stems without experiencing any more browsing resulting a reduction of browsing on total number of stems to 22%.
+
+### Scatter plot's showing the distribution of Percent Damage over time.
+
+```{r}
+#| echo: false
+
+ggplot(data, aes(x = Treatment, y = PercentDamage, color = factor(WAT))) +
+  geom_jitter(size = 2, alpha = 0.7, width = 0.2, height = 0) +  # Add jitter with slight horizontal spread
+  facet_wrap(~ WAT, nrow = 1) +  # Facet in a single row by WAT
+  labs(
+    title = "Percent Damage by Treatment over Time",
+    x = "Treatment",
+    y = "Percent Damage",
+    color = "Weeks After Treatment"  # Legend title for the color aesthetic
+  ) +
+  theme(
+    legend.position = "right",  # Place legend on the right
+    plot.title = element_text(hjust = 0.5, size = 14)  # Center title and increase font size
+  )
+```
+
+### Histogram showing the distribution of Percent Damage over time.
+
+```{r}
+ggplot(data, aes(x = PercentDamage, fill = factor(Treatment))) +
+  geom_histogram(binwidth = 10, color = "black", alpha = 0.7) +  # Histogram with bins of width 10
+  facet_grid(Treatment ~ WAT) +  # Facet rows by Treatment and columns by WAT
+  labs(
+    title = "Distribution of Percent Damage by Treatment and Weeks After Treatment",
+    x = "Percent Damage",
+    y = "Count",
+    fill = "Treatment"  # Legend title for the fill aesthetic
+  ) +
+  theme(
+    legend.position = "right",  # Place legend on the right
+    plot.title = element_text(hjust = 0.5, size = 14),  # Center title and increase font size
+    strip.text = element_text(size = 12)  # Adjust facet label text size
+  )
+```
+
+### Scatter plot
+
+```{r}
+ggplot(data, aes(x = factor(WAT), y = PercentDamage, color = factor(Treatment), group = Treatment)) +
+  geom_point(position = position_jitter(width = 0.2, height = 0), alpha = 0.7) +  # Jittered scatter points
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", size = 1) +  # Add a trend line
+  facet_grid(~ Treatment) +  # Facet columns by Treatment
+  labs(
+    title = "Scatter Plot of Percent Damage by Treatment with Trend Lines",
+    x = "Weeks After Treatment",
+    y = "Percent Damage",
+    color = "Treatment"  # Legend title for the color aesthetic
+  ) +
+  theme(
+    legend.position = "right",  # Place legend on the right
+    plot.title = element_text(hjust = 0.5, size = 14),  # Center title and increase font size
+    strip.text = element_text(size = 12)  # Adjust facet label text size
+  )
+
+```
+
+The distribution of the data may indicate that a zero-inflated model is necessary.
+
+## Simple Analysis
+
+### Fitting models for simple linear Regression
+
+```{r}
+# Linear Regression for Height
+
+# Null Model
+lm_pd_1 <- lm(formula = PercentDamage ~ Treatment, data = data)
+
+# Partial Model
+lm_pd_2 <- lm(formula = PercentDamage ~ Treatment * WAT, data = data)
+
+# Full Model
+lm_pd_3 <- lm(formula = PercentDamage ~ Treatment * WAT * Field, data = data)
+```
+
+### Choosing the best model
+
+```{r}
+#ANOVA for differences in models 
+anova(lm_pd_1, lm_pd_2, lm_pd_3)
+
+# AIC to pick the best model
+AIC(lm_pd_1, lm_pd_2, lm_pd_3)
+```
+
+Model lm_pd_3 has the lowest AIC score.
+
+The AIC score is very high, model most likely doesn't fit the data well. The scatter plots and histograms above indicate many values at zero, may need to fit a zero inflated model. To account for the design of the experiment, will most likely need block by Field/Plot. A zero inflated mixed-effects model may be the best option.
+
+```{r}
+summary(lm_pd_3)
+```
+
+**No model significance of Treatment or WAT variables as well as Treatment:WAT interaction.**
+
+### Checking Model Assumptions
+
+Using a QQ plot to look for non-normal distributions of the model's plotted residuals.
+
+```{r}
+plot(lm_pd_3)
+```
+
+Looking at the plotted Q-Q Residuals, data does appear to be non-normal with outliers.
+
+A better fitting model will provide more accurate results. As mentioned earlier a zero-inflated mixed effects model may be fit the data better.
+
+Outlier observations 61, 485, and 75 may need to be removed.
+
+## More In-depth Analysis
+
+### Fitting a Mixed-Effects Model for Percent Damage using the glmmTMB Package.
+
+```{r}
+# Mixed-Effects Model for Percent Damage
+
+# Null Model
+mem_pd_1 <- glmmTMB(PercentDamage ~ Treatment, data = data)
+
+# Partial Model 1
+mem_pd_2 <- glmmTMB(PercentDamage ~ Treatment * WAT, data = data)
+
+# Partial Model 2
+mem_pd_3 <- glmmTMB(PercentDamage ~ Treatment * WAT * Field, data = data)
+
+# Full Model with random effects for Field
+mem_pd_4 <- glmmTMB(PercentDamage ~ Treatment * WAT + (1 | Field), data = data)
+
+# Full Model with random effects for Field/Plot
+mem_pd_5 <- glmmTMB(PercentDamage ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data)
+```
+
+### Model Comparison using ANOVA
+
+```{r}
+# Compare models using likelihood ratio test
+anova(mem_pd_1, mem_pd_2, mem_pd_3, mem_pd_4, mem_pd_5)
+```
+
+### Model Comparison using AIC
+
+```{r}
+# AIC comparison
+AIC(mem_pd_1, mem_pd_2, mem_pd_3, mem_pd_4, mem_pd_5)
+```
+
+**ANOVA and AIC indicate that mem_pd_5 is the best model**
+
+### Summary of best fitted model!
+
+```{r}
+# Full model with nested random effects
+summary(mem_pd_5)
+```
+
+**Model significance for Treatment variable as well as the Treatment:WAT interaction.**
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+# Extract residuals
+residuals <- resid(mem_pd_5)
+fitted <- fitted(mem_pd_5)
+
+# Plot residuals vs fitted values
+plot(fitted, residuals, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals)
+qqline(residuals, col = "red")
+```
+
+Although this model shows significance for treatment and the treatment:WAT interaction, the high AIC and plotted residuals are troubling (better, but still troubling).
+
+## Fitting a Zero Inflated Mixed-Effects Model for Percent Damage using the glmmTMB Package.
+
+**The glmmTMB package was designed for zero-inflated count data (i.e., data containing more zeros than would be expected from the standard error distributions in other mixed models). Models that ignore zero-inflation, or treat it like over dispersion, tend to resulted in biased parameter estimates (Harrison, 2014).**
+
+### Rounding Percent Damage values for modeling.
+
+```{r}
+data <- data |>
+  mutate(pd_round = round(PercentDamage))
+```
+
+**Fitting zero-inflated mixed effects models using a poisson distribution. Originally, I included a model with a negative binomial distribution but had model convergence problems resulting in non-positive-definite Hessian matrix = NA values for likelihood/AIC/etc.**
+
+```{r}
+# diagnoses of lowest AIC negative binomial zero-inflated model (zi_nb_pd_5) 
+# Unusually large coefficients (|x|>10):
+
+# zi~(Intercept)    zi~pd_round 
+#       22.56691      -13.57655 
+```
+
+**Model diagnosis: Large negative coefficients in zi (log-odds of zero-inflation), dispersion, or random effects (log-standard deviations) suggest unnecessary components (converging to zero on the constrained scale); large negative and/or positive components in binomial or Poisson conditional parameters suggest (quasi-)complete separation. Large values of nbinom2 dispersion suggest that you should use a Poisson model instead.**
+
+### Fitting Zero Inflated Poisson Mixed-Effects Model
+
+```{r}
+# Zero Inflated Poisson Mixed-Effects Model for Percent Damage
+# Doing my due diligence and fitting all possible models
+
+# Null Model
+zi_pois_pd_1 <- glmmTMB(pd_round ~ Treatment, zi = ~pd_round,
+  family = poisson, data = data)
+
+# Partial Model 1
+zi_pois_pd_2 <- glmmTMB(pd_round ~ Treatment * WAT, zi = ~pd_round,
+  family = poisson, data = data)
+
+# Partial Model 2
+zi_pois_pd_3 <- glmmTMB(pd_round ~ Treatment * WAT * Field, zi = ~pd_round,
+  family = poisson, data = data)
+
+# Full Model with random effects for Field
+zi_pois_pd_4 <- glmmTMB(pd_round ~ Treatment * WAT + (1 | Field), zi = ~pd_round,
+  family = poisson, data = data)
+
+# Full Model with random effects for Field/Plot
+zi_pois_pd_5 <- glmmTMB(pd_round ~ Treatment * WAT + (1 | Plot) + (1 | Field), zi = ~pd_round,
+  family = poisson, data = data)
+```
+
+### Model Comparison using ANOVA
+
+```{r}
+anova(zi_pois_pd_1, zi_pois_pd_2, zi_pois_pd_3, zi_pois_pd_4, zi_pois_pd_5)
+```
+
+### Model comparison using AIC
+
+```{r}
+AIC(zi_pois_pd_1, zi_pois_pd_2, zi_pois_pd_3, zi_pois_pd_4, zi_pois_pd_5)
+```
+
+**Model zi_pois_pd_5 has the lowest AIC.**
+
+### Summary of best fitted model
+
+```{r}
+summary(zi_pois_pd_5)
+```
+
+**Model significance in treatment (condensed tannin repellent).**
+
+**Model significance is Treatment:WAT interaction.**
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+# Extract residuals
+residuals_zi_pois <- resid(zi_pois_pd_5)
+fitted_zi_pois <- fitted(zi_pois_pd_5)
+
+# Plot residuals vs fitted values
+plot(fitted_zi_pois, residuals_zi_pois, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals_zi_pois)
+qqline(residuals_zi_pois, col = "red")
+```
+
+The deviance of the residuals from the QQ line is concerning...could just be zero-inflated model fit.
+
+My next step is to remove the outliers and try refitting my models.
+
+## Removing Outliers and refitting zero-inflated poisson model.
+
+I'm only refitting my best zero-inflated poisson model as that had the overall lowest AIC score.
+
+### Removing outliers
+
+```{r}
+data_rm_outliers <- data[-c(61, 485, 75), ]
+```
+
+### Refitting best zero-inflated negative binomial model
+
+```{r}
+# Full Model with nested random effects for Field and Plot
+zi_pois_pd_outliers <- glmmTMB(pd_round ~ Treatment * WAT + (1 | Plot) + (1 | Field), zi = ~pd_round,
+  family = poisson, data = data_rm_outliers)
+```
+
+### Summary of best fitted model
+
+```{r}
+summary(zi_pois_pd_outliers)
+```
+
+**Increased model significance for all predictor variables!**
+
+### Difference in AIC between zero-inflated model and zero-inflated model with outliers removed
+
+```{r}
+AIC(zi_pois_pd_5, zi_pois_pd_outliers)
+```
+
+**AIC score for model without outliers is \~270 points lower.**
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+# Extract residuals
+residuals_zi_pois_outlier <- resid(zi_pois_pd_outliers)
+fitted_zi_pois_outier <- fitted(zi_pois_pd_outliers)
+
+# Plot residuals vs fitted values
+plot(fitted_zi_pois_outier, residuals_zi_pois_outlier, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals_zi_pois_outlier)
+qqline(residuals_zi_pois_outlier, col = "red")
+```
+
+Plotted Q-Q plot residuals looks slightly better.
+
+## Checking for Over Dispersion
+
+```{r}
+# Simulate residuals for the fitted model
+sim_res <- simulateResiduals(fittedModel = zi_pois_pd_outliers)
+```
+
+```{r}
+# Plot residuals
+plot(sim_res)
+```
+
+```{r}
+# Test for overdispersion
+# Errors in test?
+testDispersion(sim_res)
+```
+
+## Incoorporating binary variable to account for added plants after week 2
+
+```{r}
+data_rm_outliers$num_plants_change <- ifelse(data_rm_outliers$WAT >= 2, 1, 0)  
+```
+
+### Rerunning best model with binary variable
+
+```{r}
+zi_pois_adjusted <- glmmTMB(pd_round ~ Treatment * WAT + num_plants_change +  
+                              (1 | Field) + (1 | Plot),  
+                            zi = ~pd_round,  
+                            family = poisson,  
+                            data = data_rm_outliers)  
+```
+
+### Model Diagnostics
+
+```{r}
+AIC(zi_pois_adjusted)
+```
+
+AIC with of model with binary variable is slightly lower then without (\~2 points lower)
+
+```{r}
+summary(zi_pois_adjusted)
+```
+
+```{r}
+# Extract residuals
+residuals_zi_pois_adjusted <- resid(zi_pois_adjusted)
+fitted_zi_pois_adjusted <- fitted(zi_pois_adjusted)
+
+# Plot residuals vs fitted values
+plot(fitted_zi_pois_adjusted, residuals_zi_pois_adjusted, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+# Normal QQ Plot
+qqnorm(residuals_zi_pois_adjusted)
+qqline(residuals_zi_pois_adjusted, col = "red")
+```
+
+## Continuing analysis for other response variables
+
+[Click here for the analysis on white-tailed deer observations among plots](camera.html)

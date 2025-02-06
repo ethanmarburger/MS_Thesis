@@ -1,0 +1,169 @@
+---
+title: "Enclosure"
+format: html
+editor: visual
+---
+
+# Analysis info
+
+Looking at differences in mean soybean height between plants protected from browsing to those unprotected from browsing. Individuals exposed to browsing were exposed with variable treatment concentrations (0:control or 1:tannins). Additionally we investigated differences in mean height over time incorporating WAT (Week after application) as an additional predictor variable. Plot and Field as were included as nested random effects.
+
+Below is our process of fitting our data to the best possible model.
+
+# Initial Enclosure Height Analysis
+
+```{r}
+#| echo: true
+#| include: false
+library(tidyverse)
+library(ggplot2)
+library(glmmTMB)
+```
+
+## Reading in Data Source
+
+```{r}
+# Read the data
+data <- read.csv("Data.csv", header=TRUE)
+```
+
+**Sub setting data to:**
+
+**1) Convert predictor variables to factors with "levels".**
+
+**2) Remove unneeded columns.**
+
+**3) Remove rows with missing Height values (missing values = dead plant or sampling error).**
+
+**4) Only include measurements from weeks 1 through 4**
+
+```{r}
+# Convert categorical variables to factors
+data$Field <- as.factor(data$Field)
+data$Plot <- as.factor(data$Plot)
+data$Treatment <- as.factor(data$Treatment)
+data$Enclosure <- as.factor(data$Enclosure)
+data$WAT <- as.factor(data$WAT)
+
+# Remove rows with missing Height values and unused columns
+data <- data |>
+  filter(!is.na(Height)) |>
+  select(-PercentDamage)
+
+# Subset to remove WAT values at week zero
+data <- data[data$WAT != "0", ]
+```
+
+## Exploratory Data Analysis
+
+**Calculating and Displaying mean soybean height for treatments across Weeks after application.**
+
+```{r}
+# Calculate mean Height for each Treatment and WAT combination
+summary_data <- data |>
+  group_by(Enclosure,Treatment, WAT) |>
+  summarise(mean_height = mean(Height, na.rm = TRUE))
+
+# Displaying mean soybean height for treatments across Weeks after application
+print(data)
+```
+
+## Calculating standard error for each group
+
+```{r}
+# Calculate mean and SE for each group
+enclosure_data <- data |>
+  group_by(WAT, Enclosure, Treatment) |>
+  summarise(
+    mean_height = mean(Height),
+    se = sd(Height) / sqrt(n()),  # Calculate SD from raw data (Height)
+    .groups = "drop"
+  )
+```
+
+# Plotting differences in Protected and Unprotected Plant Heights by Treatment and WAT
+
+```{r}
+# Create the plot with updated facet labels and error bars
+ggplot(enclosure_data, aes(x = WAT, y = mean_height, fill = Enclosure)) +
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), width = 0.7) +
+  geom_errorbar(
+    aes(ymin = mean_height - se, ymax = mean_height + se),
+    position = position_dodge(width = 0.7),
+    width = 0.2
+  ) +
+  facet_wrap(~factor(Treatment, levels = c(0, 1), labels = c("Tannin Apllication: 0%", "Tannin Application: 10%"))) +  # Modify facet labels
+  labs(
+    x = "Weeks After Tannin Application",
+    y = "Mean Soybean Height (cm)",
+    fill = "Protection from Browsing:"
+  ) +
+  scale_fill_discrete(labels = c("Unprotected", "Protected")) +
+  scale_color_discrete(labels = c("No Repellent", "Repellent Applied")) +
+  theme(
+    legend.position = "top",
+    strip.text = element_text(size = 12),
+    axis.text.x = element_text(size = 12)  # Adjust x-axis text size if necessary
+  )
+
+```
+
+```{r}
+print(summary_data)
+```
+
+## Simple enclosure height analysis
+
+**Fitting models for simple linear Regression**
+
+```{r}
+# Linear Regression for Height
+
+lm_m_height_1 <- lm(formula = mean_height ~ Treatment, data = enclosure_data)
+
+lm_m_height_2 <- lm(formula = mean_height ~ Treatment * WAT, data = enclosure_data)
+
+lm_m_height_3 <- lm(formula = mean_height ~ Treatment * WAT + Enclosure, data = enclosure_data)
+
+lm_m_height_4 <- lm(formula = mean_height ~ Treatment + WAT + Enclosure, data = enclosure_data)
+```
+
+**Choosing the best model**
+
+```{r}
+#ANOVA for differences in models 
+anova(lm_m_height_1, lm_m_height_2, lm_m_height_3, lm_m_height_4)
+
+# AIC to pick the best model
+AIC(lm_m_height_1, lm_m_height_2, lm_m_height_3, lm_m_height_4)
+```
+
+**Model lm_m_height_4 has the lowest AIC score.**
+
+```{r}
+summary(lm_m_height_4)
+```
+
+**Linear regression model indicates that treatment had no significant effect on mean soybean height. Model doesn't quite show differences height based on treatment and enclosure. An ANOVA model may better show the relationship between treatment and heights of plants unprotected vs those that were protected.**
+
+## 3-way anova
+
+```{r}
+# Main effect of Enclosure on mean height only
+# Plants within enclosures were not treated with tannins
+anova_mean_height <- aov(mean_height ~ Treatment * WAT + Enclosure, data = enclosure_data)
+```
+
+```{r}
+AIC(anova_mean_height)
+```
+
+```{r}
+summary(anova_mean_height)
+```
+
+**ANOVA model indicates that plants receiving treatment application and were exposed to browsing resulted in statistically different heights then those in enclosures.**
+
+## Continuing analysis for other response variables
+
+[Click here for the analysis on Browsing Damage](Percent_Damage.html)

@@ -1,0 +1,356 @@
+---
+title: "camera"
+format: html
+editor: visual
+---
+
+# Analysis info
+
+Looking at differences in observed white-tailed deer exhibiting feeding behaviors between plots with variable treatments (0:control or 1:tannins) over time. We included WAT (Week after application) as an additional predictor variable and Plot and Field as nested random effects.
+
+Below is our process of fitting our data to the best possible model.
+
+# Camera Data Analysis
+
+```{r}
+#| echo: true
+#| include: false
+library(lme4)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(glmmTMB)
+```
+
+## Reading in Data
+
+```{r}
+seq_data <- read.csv("sequences.csv")
+```
+
+## Applying transformations and formatting data
+
+```{r}
+# Transform start_time to year-month-day
+seq_data <- seq_data |>
+  mutate(start_time = as.Date(start_time))
+
+# subsetting to only show only post treatment dates >= 2024-06-21
+seq_data <- seq_data |>
+  filter(identified_by == 'Ethan Marburger',
+         start_time >= "2024-06-22" & start_time <= "2024-08-02",
+         common_name == "White-tailed Deer")
+
+seq_data <- seq_data |>
+  mutate(treatment = case_when(
+    grepl("^WTD_2|^WTD_4|^WTD_5|^WTD_7|^WTD_8|^WTD_10|^WTD_14|^WTD_15|^WTD_17|^WTD_18", deployment_id) ~ 1,
+    grepl("^WTD_1|^WTD_3|^WTD_6|^WTD_9|^WTD_11|^WTD_12|^WTD_13|^WTD_16|^WTD_19|^WTD_20", deployment_id) ~ 0,
+    TRUE ~ NA_real_)) |>
+  mutate(WAT = case_when(
+    start_time >= "2024-06-22" & start_time <= "2024-06-28" ~ 1,
+    start_time >= "2024-06-29" & start_time <= "2024-07-05" ~ 2,
+    start_time >= "2024-07-06" & start_time <= "2024-07-12" ~ 3,
+    start_time >= "2024-07-13" & start_time <= "2024-07-19" ~ 4,
+    start_time >= "2024-07-20" & start_time <= "2024-07-26" ~ 5,
+    start_time >= "2024-07-27" & start_time <= "2024-08-02" ~ 6,
+    TRUE ~ NA_real_)) |>
+  mutate(field = case_when(
+    grepl("^WTD_1|^WTD_2|^WTD_3|^WTD_4|^WTD_5|^WTD_6", deployment_id) ~ 1,
+    grepl("^WTD_7|^WTD_8|^WTD_9|^WTD_20", deployment_id) ~ 2,
+    grepl("^WTD_10|^WTD_11|^WTD_12|^WTD_13|^WTD_14|^WTD_15|^WTD_16|^WTD_17|^WTD_18|^WTD_19", deployment_id) ~ 3,
+    TRUE ~ NA_real_)) |>
+  mutate(plot = case_when(
+    grepl("^WTD_1_", deployment_id) ~ 1,
+    grepl("^WTD_2_", deployment_id) ~ 2,
+    grepl("^WTD_3_", deployment_id) ~ 3,
+    grepl("^WTD_4_", deployment_id) ~ 4,
+    grepl("^WTD_5_", deployment_id) ~ 5,
+    grepl("^WTD_6_", deployment_id) ~ 6,
+    grepl("^WTD_7_", deployment_id) ~ 7,
+    grepl("^WTD_8_", deployment_id) ~ 8,
+    grepl("^WTD_9_", deployment_id) ~ 9,
+    grepl("^WTD_10_", deployment_id) ~ 10,
+    grepl("^WTD_11_", deployment_id) ~ 11,
+    grepl("^WTD_12_", deployment_id) ~ 12,
+    grepl("^WTD_13_", deployment_id) ~ 13,
+    grepl("^WTD_14_", deployment_id) ~ 14,
+    grepl("^WTD_15_", deployment_id) ~ 15,
+    grepl("^WTD_16_", deployment_id) ~ 16,
+    grepl("^WTD_17_", deployment_id) ~ 17,
+    grepl("^WTD_18_", deployment_id) ~ 18,
+    grepl("^WTD_19_", deployment_id) ~ 19,
+    grepl("^WTD_20_", deployment_id) ~ 20,
+    TRUE ~ NA_real_))
+
+# Creating a new tibble
+data <- seq_data |>
+  select(deployment_id, treatment, Date = start_time, WAT, field, plot, group_size) |>
+  group_by(WAT)
+print(data)
+```
+
+## Daily sums of group_size values.
+
+```{r}
+# getting to daily sums of individuals per plot
+data_daily <- aggregate(group_size ~ Date + plot, data = data, sum, na.rm = TRUE)
+
+# Creating treatment variable
+data_daily$treatment <- ifelse(data_daily$plot %in% c(1, 3, 6, 9, 11, 12, 13, 16, 19, 20), 0,
+                         ifelse(data_daily$plot %in% c(2, 4, 5, 7, 8, 10, 14, 15, 17, 18), 1,
+                                NA))
+
+# Creating a Field variable
+data_daily$field <- ifelse(data_daily$plot %in% c(1, 2, 3, 4, 5, 6), 1,
+                         ifelse(data_daily$plot %in% c(7, 8, 9, 20), 2,
+                                3))
+
+# Creating a WAT variable
+data_daily <- data_daily |>
+  mutate(WAT = case_when(
+  Date >= "2024-06-22" & Date <= "2024-06-28" ~ 1,
+  Date >= "2024-06-29" & Date <= "2024-07-05" ~ 2,
+  Date >= "2024-07-06" & Date <= "2024-07-12" ~ 3,
+  Date >= "2024-07-13" & Date <= "2024-07-19" ~ 4,
+  Date >= "2024-07-20" & Date <= "2024-07-26" ~ 5,
+  Date >= "2024-07-27" & Date <= "2024-08-02" ~ 6,
+  TRUE ~ NA_real_))
+
+print(data_daily)
+```
+
+## Simple Analysis
+
+```{r}
+#Converting Field, Plot, and Treatment variables to factors
+data_daily <- data_daily |>
+  mutate(Field = as.factor(field),
+         Plot = as.factor(plot),
+         Treatment = as.factor(treatment)) |>
+  select(-field, -plot, -treatment) # Dropping unneeded variables
+```
+
+### Simple Linear Regression
+
+```{r}
+# Linear Regression
+
+# Null Model
+lm_count_1 <- lm(formula = group_size ~ Treatment, data = data_daily)
+
+# Partial Model
+lm_count_2 <- lm(formula = group_size ~ Treatment * WAT, data = data_daily)
+
+# Full Model
+lm_count_3 <- lm(formula = group_size ~ Treatment * WAT * Field, data = data_daily)
+```
+
+### Choosing the best model
+
+```{r}
+#ANOVA for differences in models 
+anova(lm_count_1, lm_count_2, lm_count_3)
+
+# AIC to pick the best model
+AIC(lm_count_1, lm_count_2, lm_count_3)
+```
+
+### Model Summary
+
+```{r}
+summary(lm_count_3)
+```
+
+**No statistical significance but a negative influence of Treatment on group size.**
+
+### Checking Model Assumptions
+
+Using a QQ plot to look for non-normal distributions of the model's plotted residuals
+
+```{r}
+plot(lm_count_3)
+```
+
+Observed outliers: 190, 207, 212. May remove outliers later.
+
+Q-Q Plot isn't the worst.
+
+A mixed effects model that allows us to treat Field and Plot as random variables may better match the study design.
+
+## Mixed Effects Models
+
+### Fitting models
+
+```{r}
+# Mixed-Effects Model for Percent Damage
+
+# Null Model
+mem_1 <- glmmTMB(group_size ~ Treatment, data = data_daily)
+
+# Partial Model 1
+mem_2 <- glmmTMB(group_size ~ Treatment * WAT, data = data_daily)
+
+# Partial Model 2
+mem_3 <- glmmTMB(group_size ~ Treatment * WAT * Field, data = data_daily)
+
+# Full Model with random effects for Field
+mem_4 <- glmmTMB(group_size ~ Treatment * WAT + (1 | Field), data = data_daily)
+
+# Full Model with random effects for Field/Plot
+mem_5 <- glmmTMB(group_size ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data_daily)
+```
+
+### Choosing the best model
+
+```{r}
+#ANOVA for differences in models 
+anova(mem_1, mem_2, mem_3,mem_4, mem_5)
+
+# AIC to pick the best model
+AIC(mem_1, mem_2, mem_3,mem_4, mem_5)
+```
+
+### Model Summary
+
+```{r}
+summary(mem_5)
+```
+
+### Model Diagnostics
+
+```{r}
+# Extract residuals
+residuals_1 <- resid(mem_5)
+fitted_1 <- fitted(mem_5)
+
+# Plot residuals vs fitted values
+plot(fitted_1, residuals_1, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals_1)
+qqline(residuals_1, col = "red")
+```
+
+### Removing outliers and refitting best model
+
+```{r}
+data_outlier <- data_daily[-c(190, 207, 212), ]
+```
+
+```{r}
+# Model using data set without outliers
+mem_6 <- glmmTMB(group_size ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data_outlier)
+```
+
+### Model Summary
+
+```{r}
+summary(mem_6)
+```
+
+**Increased model significance for all predictor variables!**
+
+### Difference in AIC between last two models
+
+```{r}
+AIC(mem_5, mem_6)
+```
+
+**AIC score for model without outliers is roughly 95 points lower.**
+
+### Model Diagnostics
+
+```{r}
+# Extract residuals
+residuals_6 <- resid(mem_6)
+fitted_6 <- fitted(mem_6)
+
+# Plot residuals vs fitted values
+plot(fitted_6, residuals_6, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals_6)
+qqline(residuals_6, col = "red")
+```
+
+**Based on the plotted residuals a model incorporating a log transformation of the response variable may better fit the data.**
+
+### Log transformation model
+
+```{r}
+# Log transformation on data set without outliers
+mem_log <- glmmTMB(log(group_size) ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data_outlier)
+```
+
+### Model Summary
+
+```{r}
+summary(mem_log)
+```
+
+**No model significance for alpha (0.05), but Treatment does have a negative influence on group_size**
+
+**I wonder if an ANOVA would be a more appropriate model?**
+
+### Difference in AIC between last two models
+
+```{r}
+AIC(mem_6, mem_log)
+```
+
+**AIC score for log transformed model is 824. That's roughly 991 points less then mem_6**
+
+### Model Diagnostics
+
+```{r}
+# Extract residuals
+residuals_log <- resid(mem_log)
+fitted_log <- fitted(mem_log)
+
+# Plot residuals vs fitted values
+plot(fitted_log, residuals_log, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+```{r}
+qqnorm(residuals_log)
+qqline(residuals_log, col = "red")
+```
+
+**Based on the distribution on the fitted residuals and theoretical quarantines, I'm unsure if a log transformed dataset is best. But this model does result in the lowest AIC score.**
+
+## Visualizing subset data with outliers removed
+
+```{r}
+ggplot(data_outlier, aes(x = factor(Treatment, levels = c(0, 1), labels = c("0%", "10%")), 
+                        y = group_size, fill = factor(Treatment, levels = c(0, 1), labels = c("0%", "10%")))) +
+  geom_boxplot() +
+  facet_wrap(~ WAT, nrow = 1) +  # Facet in a single row
+  labs(
+    x = "Tannin Concentration",
+    y = "Observed White-tailed Deer",
+    fill = "Tannin Concentration"  # Update legend title
+  ) +
+  # Create a dummy aesthetic for WAT to generate a second legend
+  geom_point(aes(color = factor(WAT)), alpha = 0) +  # Invisible points to create the WAT legend
+  scale_color_discrete(name = "Weeks After Tannin Application") +  # Legend for WAT
+  theme(
+    legend.position = "top",  # Place legend on top
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),  # Center the title horizontally
+    plot.title.position = "plot",  # Align title to the entire plot area
+    plot.margin = margin(t = 20, b = 10, l = 10, r = 10),
+    axis.text.x = element_text(size = 12)  # Adjust x-axis text size if necessary# Adjust margins for proper spacing
+)
+
+```
+
+## Continuing analysis for other response variables
+
+[Click here for the analysis on yield estimates](yield.html)

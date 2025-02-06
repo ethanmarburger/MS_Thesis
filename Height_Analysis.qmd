@@ -4,15 +4,20 @@ format: html
 editor: visual
 ---
 
+# Analysis info
+
+Looking at differences in soybean height based on Treatment (0:control or 1:tannins) over time. We included WAT (Week after application) as an additional predictor variable and Plot and Field as nested random effects.
+
+Below is our process of fitting our data to the best possible model.
+
 # Initial Height Analysis
 
-## Loading and Subsetting Data
+## Loading and Sub setting Data
 
 ```{r}
 #| echo: true
 #| include: false
 library(tidyverse)
-library(lme4)
 library(lmerTest)
 library(glmmTMB)
 library(ggplot2)
@@ -29,7 +34,7 @@ data <- read.csv("Data.csv", header=TRUE)
 
 **Sub setting data to:**
 
-**1) Only include values from unenclosed plants.**
+**1) Only include values from plants that are exposed to browsing as opposed to those completely protected from browsing.**
 
 **2) Convert predictor variables to factors with "levels".**
 
@@ -60,25 +65,39 @@ summary_data <- data |>
   group_by(Treatment, WAT) |>
   summarise(mean_height = mean(Height, na.rm = TRUE))
 
+# Subset to remove WAT values at week zero
+summary_data <- summary_data[summary_data$WAT != "0", ]
+
 # Displaying mean soybean height for treatments across Weeks after application
 print(summary_data)
 ```
 
-## **Plotting "Mean Height by Treatment Over Time"**
+## Plotting "Mean Height by Treatment Over Time"
 
 ```{r}
 #| echo: false
 # Create a plot
-ggplot(summary_data, aes(x = WAT, y = mean_height, color = Treatment, group = Treatment)) +
-  geom_line() +
-  geom_point() +
-  labs(title = "Mean Height by Treatment over Time",
-       x = "Weeks After Treatment",
-       y = "Mean Height") +
-  theme_minimal()
+ggplot(summary_data, aes(x = WAT, y = mean_height, color = factor(Treatment), group = Treatment)) +
+  geom_line(linewidth = 1) +  # Adjust line width for better visibility
+  geom_point(size = 3) +  # Make points larger for clarity
+  labs(
+    title = "Mean Height by Treatment Over Time",
+    x = "Weeks After Treatment",
+    y = "Mean Height",
+    color = "Treatment"  # Add a legend title
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),  # Center and style title
+    axis.text = element_text(size = 12),  # Adjust axis text size
+    axis.title = element_text(size = 13),  # Adjust axis title size
+    legend.title = element_text(size = 12),  # Adjust legend title size
+    legend.text = element_text(size = 11)  # Adjust legend text size
+  )
+
 ```
 
-## **Box plot's showing the distribution of height over time.**
+## Box plot's showing the distribution of height over time.
 
 ```{r}
 #| echo: false
@@ -98,6 +117,38 @@ ggplot(data, aes(x = Treatment, y = Height, fill = Treatment)) +
   )
 ```
 
+## Removing Height Data from Week Zero
+
+**Measurements from week zero were taken as a baseline to show differences in height after tannins were applied. It should be excluded from analysis as measurements were taken before application of tannins and biases the results.**
+
+```{r}
+# Subset to remove Height values at week zero
+data_subset <- data[data$WAT != "0", ]
+```
+
+### Plotting subset data
+
+```{r}
+ggplot(data_subset, aes(x = factor(Treatment, levels = c(0, 1), labels = c("0%", "10%")), y = Height, fill = factor(Treatment, labels = c("0%", "10%")))) +
+  geom_boxplot() +
+  facet_wrap(~ WAT, nrow = 1) +  # Facet in a single row
+  labs(
+    x = "Tannin Concentration",
+    y = "Soybean Height (cm)",
+    fill = "Tannin Concentration"  # Update legend title
+  ) +
+  # Create a dummy aesthetic for WAT to generate a second legend
+  geom_point(aes(color = factor(WAT)), alpha = 0) +  # Invisible points to create the WAT legend
+  scale_color_discrete(name = "Weeks After Treatment") +  # Legend for WAT
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),  # Center title and bold it
+    plot.margin = margin(t = 20, b = 20, l = 20, r = 20),  # Increase space between the figure and the edges
+    axis.text.x = element_text(size = 12)  # Adjust x-axis text size if necessary
+  )
+
+```
+
 ## Simple Analysis
 
 **Fitting models for simple linear Regression**
@@ -106,13 +157,13 @@ ggplot(data, aes(x = Treatment, y = Height, fill = Treatment)) +
 # Linear Regression for Height
 
 # Null Model
-lm_height_1 <- lm(formula = Height ~ Treatment, data = data)
+lm_height_1 <- lm(formula = Height ~ Treatment, data = data_subset)
 
 # Partial Model
-lm_height_2 <- lm(formula = Height ~ Treatment * WAT, data = data)
+lm_height_2 <- lm(formula = Height ~ Treatment * WAT, data = data_subset)
 
 # Full Model
-lm_height_3 <- lm(formula = Height ~ Treatment * WAT * Field, data = data)
+lm_height_3 <- lm(formula = Height ~ Treatment * WAT * Field, data = data_subset)
 ```
 
 **Choosing the best model**
@@ -147,54 +198,66 @@ plot(lm_height_3)
 
 **A better fitting model will provide more accurate results.**
 
+**Removal of outliers 1292, 1205, and 1314 may improve model fit. I'm unsure if this is correct because I only have 1166 observations in my dataset?**
+
 # Continued Analysis with Model Adjustments
+
+## Removing outliers
+
+```{r}
+# Does nothing because there are no corresponding values 
+data_subset <- data_subset[-c(1205, 1292, 1314), ]
+```
 
 ## Mixed Effects Model
 
 ```{r}
-# Partial model without nested random effect
-lmer_1 <- lmer(Height ~ Treatment + (1|Field), data = data)
+# Mixed-Effects Model for Height
 
-# Full model without nested  random effect
-lmer_2 <- lmer(Height ~ Treatment * WAT + (1|Field), data = data)
+# Null Model
+mem_h_1 <- glmmTMB(Height ~ Treatment, data = data_subset)
 
-# Partial model with nested random effects
-lmer_3 <- lmer(Height ~ Treatment + (1|Field/Plot), data = data)
+# Partial Model 1
+mem_h_2 <- glmmTMB(Height ~ Treatment * WAT, data = data_subset)
 
-# Full model with nested random effects
-lmer_4 <- lmer(Height ~ Treatment * WAT + (1|Field/Plot), data = data)
+# Partial Model 2
+mem_h_3 <- glmmTMB(Height ~ Treatment * WAT * Field, data = data_subset)
 
-# Null model (only random effects)
-lmer_null <- lmer(Height ~ 1 + (1|Field/Plot), data = data)
+# Full Model with random effects for Field
+mem_h_4 <- glmmTMB(Height ~ Treatment * WAT + (1 | Field), data = data_subset)
+
+# Full Model with random effects for Field/Plot
+mem_h_5 <- glmmTMB(Height ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data_subset)
 ```
 
 ## Model Comparison using ANOVA
 
 ```{r}
 # Compare models using likelihood ratio test
-anova(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+anova(mem_h_1, mem_h_2, mem_h_3, mem_h_4, mem_h_5)
 ```
 
 ## Model comparison using AIC
 
 ```{r}
 # AIC comparison
-AIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+AIC(mem_h_1, mem_h_2, mem_h_3, mem_h_4, mem_h_5)
 ```
 
 ## Model comparison using BIC
 
 ```{r}
 # BIC comparison
-BIC(lmer_1, lmer_2, lmer_3, lmer_4, lmer_null)
+BIC(mem_h_1, mem_h_2, mem_h_3, mem_h_4, mem_h_5)
 ```
 
 ## Summary of best fitted model!
 
 ```{r}
 # Full model with nested random effects
-summary(lmer_4)
+summary(mem_h_5)
 ```
+
 **Best Fitted Model is the full model with nested random effects**
 
 ## Model Diagnostics
@@ -203,8 +266,8 @@ summary(lmer_4)
 
 ```{r}
 # Extract residuals
-residuals <- resid(lmer_4)
-fitted <- fitted(lmer_4)
+residuals <- resid(mem_h_5)
+fitted <- fitted(mem_h_5)
 
 # Plot residuals vs fitted values
 plot(fitted, residuals, xlab = "Fitted values", ylab = "Residuals",
@@ -227,48 +290,48 @@ qqline(residuals, col = "red")
 
 **A log transformation may better fit the data to out model and allow our data to meet our models normality assumption.**
 
-# Response Log Transformation and Further Analysis
+# Response variable log transformation and further analysis
 
 ## Mixed Effects Model with Log transformation
 
 ```{r}
 # Fit the mixed-effects model with log transformation on best model
-lmer_log <- lmer(log(Height) ~ Treatment * WAT + (1|Field/Plot), data = data)
+mem_h_log <- glmmTMB(log(Height) ~ Treatment * WAT + (1 | Plot) + (1 | Field), data = data_subset)
 ```
 
 ## AIC comparison between log and non-log model
 
 ```{r}
-AIC(lmer_4, lmer_log)
+AIC(mem_h_5, mem_h_log)
 ```
 
 ## BIC comparison
 
 ```{r}
-BIC(lmer_4, lmer_log)
+BIC(mem_h_5, mem_h_log)
 ```
 
 **Log transformed model has drastically lower AIC and BIC.**
 
-## Summary of Best fitting model 
+## Summary of Best fitting model
 
 ```{r}
-summary(lmer_log)
+summary(mem_h_log)
 ```
 
 **No model significance between treatment with tannin and height variable, but a positive influence.**
 
-**No model significance between tannin treatment and Week After Application, but a positive influence.**
+**Statistical Significance for Week After Treatment. This is to be expected during these growth stages**
 
-**Statistical Significance for Week After Treatment.**
+**No model significance between tannin treatment and Week After Application, but a positive influence.**
 
 ## Log Transformed Model Diagnostics
 
 ### Extracting model residuals
 
 ```{r}
-residuals_log <- resid(lmer_log)
-fitted_log <- fitted(lmer_log)
+residuals_log <- resid(mem_h_log)
+fitted_log <- fitted(mem_h_log)
 
 # Plot residuals vs fitted values
 plot(fitted_log, residuals_log, xlab = "Fitted values", ylab = "Residuals",
@@ -285,8 +348,53 @@ qqnorm(residuals_log)
 qqline(residuals_log, col = "red")
 ```
 
-**Quantiles seem to be better fit with log transformed model.**
+**Quantiles from log transformation don't fit the QQ line as well but the drastically lower AIC score indicates better model fit.**
 
-**Log transformed mixed effects model seems to be the best fit model for analyzing the Height variable.**
+## Incoorporating binary variable to account for added plants after week 2
 
-**I'll reach out someone in the Statistics Department for confirmation.**
+```{r}
+data_subset$num_plants_change <- ifelse(data_subset$WAT >= 2, 1, 0)  
+```
+
+### Rerunning best model with binary variable
+
+```{r}
+mem_log_adjusted <- glmmTMB(log(Height) ~ Treatment * WAT + num_plants_change + (1 | Plot) + (1 | Field), data = data_subset)
+```
+
+### Model Diagnostics
+
+```{r}
+AIC(mem_log_adjusted)
+```
+
+AIC with of model with binary variable is slightly lower then without (\~2 points lower)
+
+```{r}
+summary(mem_log_adjusted)
+```
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+residuals_adj <- resid(mem_log_adjusted)
+fitted_adj <- fitted(mem_log_adjusted)
+
+# Plot residuals vs fitted values
+plot(fitted_adj, residuals_adj, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+### Normality in Residuals
+
+```{r}
+qqnorm(residuals_adj)
+qqline(residuals_adj, col = "red")
+```
+
+## Continuing analysis for other response variables
+
+[Click here for analysis comparing soybean heights between plant protected from deer browsing and those exposed to browsing](enclosure_data.html)
