@@ -60,6 +60,7 @@ data$Field <- as.factor(data$Field)
 data$Plot <- as.factor(data$Plot)
 data$Treatment <- as.factor(data$Treatment)
 data$Enclosure <- as.factor(data$Enclosure)
+data$WAT <- as.factor(data$WAT)
 
 # Remove rows with missing Height values
 data <- data |>

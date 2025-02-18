@@ -8,17 +8,17 @@ editor: visual
 
 Looking at differences in mean soybean height between plants protected from browsing to those unprotected from browsing. Individuals exposed to browsing were exposed with variable treatment concentrations (0:control or 1:tannins). Additionally we investigated differences in mean height over time incorporating WAT (Week after application) as an additional predictor variable. Plot and Field as were included as nested random effects.
 
-Response Variable: 
+Response Variable:
 
-- Mean Height (cm)
+-   Mean Height (cm)
 
 Predictor Variables:
 
-- Treatment (0: Control, 1: Tannins)
-- WAT (Week After Application: 1-4)
-- Enclosure (0: Not Enclosed, 1: Enclosed)
-- Plot (1-20)
-- Field (1-20)
+-   Treatment (0: Control, 1: Tannins)
+-   WAT (Week After Application: 1-4)
+-   Enclosure (0: Not Enclosed, 1: Enclosed)
+-   Plot (1-20)
+-   Field (1-20)
 
 Below is our process of fitting our data to the best possible model.
 
@@ -39,11 +39,17 @@ library(glmmTMB)
 data <- read.csv("Data.csv", header=TRUE)
 ```
 
-**Sub setting data to:**
+## Incorporating binary variable to account for added plants after week 2
+
+```{r}
+data$num_plants_change <- ifelse(data$WAT >= 2, 1, 0)  
+```
+
+## Sub setting data to:
 
 **1) Convert predictor variables to factors with "levels".**
 
-**2) Remove unneeded columns.**
+**2) Remove unneeded variables**
 
 **3) Remove rows with missing Height values (missing values = dead plant or sampling error).**
 
@@ -77,7 +83,7 @@ summary_data <- data |>
   summarise(mean_height = mean(Height, na.rm = TRUE))
 
 # Displaying mean soybean height for treatments across Weeks after application
-head(data)
+print(summary_data)
 ```
 
 ## Calculating standard error for each group
@@ -120,10 +126,6 @@ ggplot(enclosure_data, aes(x = WAT, y = mean_height, fill = Enclosure)) +
 
 ```
 
-```{r}
-print(summary_data)
-```
-
 ## Simple enclosure height analysis
 
 **Fitting models for simple linear Regression**
@@ -131,13 +133,13 @@ print(summary_data)
 ```{r}
 # Linear Regression for Height
 
-lm_m_height_1 <- lm(formula = mean_height ~ Treatment, data = enclosure_data)
+lm_m_height_1 <- lm(formula = Height ~ Treatment, data = data)
 
-lm_m_height_2 <- lm(formula = mean_height ~ Treatment * WAT, data = enclosure_data)
+lm_m_height_2 <- lm(formula = Height ~ Treatment * WAT, data = data)
 
-lm_m_height_3 <- lm(formula = mean_height ~ Treatment * WAT + Enclosure, data = enclosure_data)
+lm_m_height_3 <- lm(formula = Height ~ Treatment * WAT + Enclosure, data = data)
 
-lm_m_height_4 <- lm(formula = mean_height ~ Treatment + WAT + Enclosure, data = enclosure_data)
+lm_m_height_4 <- lm(formula = Height ~ Treatment + WAT + Enclosure + Plot, data = data) 
 ```
 
 **Choosing the best model**
@@ -156,25 +158,114 @@ AIC(lm_m_height_1, lm_m_height_2, lm_m_height_3, lm_m_height_4)
 summary(lm_m_height_4)
 ```
 
-**Linear regression model indicates that treatment had no significant effect on mean soybean height. Model doesn't quite show differences height based on treatment and enclosure. An ANOVA model may better show the relationship between treatment and heights of plants unprotected vs those that were protected.**
+**Linear regression model indicates that treatment had no significant effect on soybean height. Model doesn't quite show differences height based on treatment and enclosure. An ANOVA model may better show the relationship between treatment and heights of plants unprotected vs those that were protected.**
+
+### Mixed Effect Model with nested random effects incorparating added binary variable
+
+```{r}
+mem_encl <- glmmTMB(log(Height) ~ Treatment * Enclosure * WAT + (1 | Plot) + (1 | Field), data = data)
+```
+
+### Model Diagnostics
+
+```{r}
+AIC(mem_encl)
+```
+
+AIC with of model with binary variable is slightly lower then without (\~2 points lower)
+
+```{r}
+summary(mem_encl)
+```
+
+## Model Diagnostics
+
+### Extracting model residuals
+
+```{r}
+residuals <- resid(mem_encl)
+fitted <- fitted(mem_encl)
+
+# Plot residuals vs fitted values
+plot(fitted, residuals, xlab = "Fitted values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+```
+
+### Normality in Residuals
+
+```{r}
+qqnorm(residuals)
+qqline(residuals, col = "red")
+```
 
 ## 3-way anova
 
 ```{r}
-# Main effect of Enclosure on mean height only
+# Main effect of Enclosure on height only
 # Plants within enclosures were not treated with tannins
-anova_mean_height <- aov(mean_height ~ Treatment * WAT + Enclosure, data = enclosure_data)
+anova_height_encl <- aov(Height ~ Treatment * WAT + Enclosure, data = data)
 ```
 
 ```{r}
-AIC(anova_mean_height)
+AIC(anova_height_encl)
 ```
 
 ```{r}
-summary(anova_mean_height)
+summary(anova_height_encl)
 ```
 
-**ANOVA model indicates that plants receiving treatment application and were exposed to browsing resulted in statistically different heights then those in enclosures.**
+## 3-way anova with Log Height
+
+```{r}
+# Main effect of Enclosure on height only
+# Plants within enclosures were not treated with tannins
+anova_height_encl_log <- aov(log(Height) ~ Treatment * WAT + Enclosure, data = data)
+
+anova_height_encl_log_3way <- aov(log(Height) ~ Treatment * WAT * Enclosure, data = data)
+```
+
+```{r}
+AIC(anova_height_encl_log)
+AIC(anova_height_encl_log_3way)
+```
+
+AIC for model without 3-way interaction is slightly smaller
+
+```{r}
+# Chi-sq test to determine if I should keep 3-way interaction 
+anova(anova_height_encl_log_3way, anova_height_encl_log, test = "Chisq")
+```
+
+p-value ≤ 0.05, keeping the interaction is justified
+
+```{r}
+summary(anova_height_encl_log_3way)
+```
+
+**ANOVA model summary**
+
+Main Effects:
+
+Treatment (p = 0.0257, F = 4.987): There is a statistically significant effect of tannin treatment on log-transformed soybean height. Plants treated with tannins (Treatment = 1) likely differed in height compared to the control (Treatment = 0).
+
+WAT (Week After Application) (p \< 2e-16, F = 292.214): There is a highly significant effect of time on soybean height. Height changes significantly over the four weeks after application.
+
+Enclosure (p \< 2e-16, F = 215.933): There is a very strong significant effect of enclosure, meaning plants protected from browsing were significantly different in height compared to those exposed.
+
+Two-Way Interactions:
+
+Treatment × WAT (p = 0.9041, F = 0.189): No significant interaction. The effect of tannin treatment on height does not change significantly over time.
+
+Treatment × Enclosure (p = 0.0298, F = 4.731): Significant interaction. The effect of tannin treatment on soybean height depends on whether the plants were enclosed or exposed to browsing.
+
+WAT × Enclosure (p = 0.0127, F = 3.624): Significant interaction. The effect of time on soybean height differs between enclosed and non-enclosed plants.
+
+Three-Way Interaction:
+
+Treatment × WAT × Enclosure (p = 0.9463, F = 0.123): Not significant. This suggests that the combined effects of treatment, time, and enclosure on height are not meaningfully different from the additive effects of these variables.
+
+Residuals: The residual mean square is 0.092, which reflects the unexplained variance in log-transformed height.
 
 ## Continuing analysis for other response variables
 

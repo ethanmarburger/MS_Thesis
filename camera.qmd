@@ -8,16 +8,16 @@ editor: visual
 
 Looking at differences in observed white-tailed deer exhibiting feeding behaviors between plots with variable treatments (0:control or 1:tannins) over time. We included WAT (Week after application) as an additional predictor variable and Plot and Field as nested random effects.
 
-Response Variable: 
+Response Variable:
 
-- Group Size (daily sums of individuals per plot)
+-   Group Size (daily sums of individuals per plot)
 
 Predictor Variables:
 
-- Treatment (0: Control, 1: Tannins)
-- WAT (Week After Application: 1-4)
-- Plot (1-20)
-- Field (1-20)
+-   Treatment (0: Control, 1: Tannins)
+-   WAT (Week After Application: 1-4)
+-   Plot (1-20)
+-   Field (1-20)
 
 Below is our process of fitting our data to the best possible model.
 
@@ -360,6 +360,22 @@ ggplot(data_outlier, aes(x = factor(Treatment, levels = c(0, 1), labels = c("0%"
     axis.text.x = element_text(size = 12)  # Adjust x-axis text size if necessary# Adjust margins for proper spacing
 )
 
+```
+
+## ANOVA Model
+
+```{r}
+anova_cam_1 <- aov(log(group_size) ~ Treatment * WAT, data = data_outlier)
+
+anova_cam_2 <- aov(log(group_size) ~ Treatment * WAT + Plot, data = data_outlier)
+```
+
+```{r}
+AIC(anova_cam_1, anova_cam_2)
+```
+
+```{r}
+summary(anova_cam_2)
 ```
 
 ## Continuing analysis for other response variables

@@ -1,0 +1,241 @@
+"common_name","hour","n"
+"American Black Bear",0,0
+"American Black Bear",1,0
+"American Black Bear",2,0
+"American Black Bear",3,0
+"American Black Bear",4,0
+"American Black Bear",5,0
+"American Black Bear",6,0
+"American Black Bear",7,0
+"American Black Bear",8,0
+"American Black Bear",9,0
+"American Black Bear",10,0
+"American Black Bear",11,0
+"American Black Bear",12,0
+"American Black Bear",13,0
+"American Black Bear",14,0
+"American Black Bear",15,0
+"American Black Bear",16,0
+"American Black Bear",17,0
+"American Black Bear",18,0
+"American Black Bear",19,0
+"American Black Bear",20,0
+"American Black Bear",21,0
+"American Black Bear",22,1
+"American Black Bear",23,0
+"Bird",0,0
+"Bird",1,0
+"Bird",2,0
+"Bird",3,0
+"Bird",4,0
+"Bird",5,0
+"Bird",6,0
+"Bird",7,0
+"Bird",8,3
+"Bird",9,0
+"Bird",10,0
+"Bird",11,0
+"Bird",12,2
+"Bird",13,1
+"Bird",14,0
+"Bird",15,1
+"Bird",16,1
+"Bird",17,0
+"Bird",18,3
+"Bird",19,1
+"Bird",20,1
+"Bird",21,0
+"Bird",22,0
+"Bird",23,0
+"Butterflies and Moths",0,0
+"Butterflies and Moths",1,0
+"Butterflies and Moths",2,0
+"Butterflies and Moths",3,0
+"Butterflies and Moths",4,0
+"Butterflies and Moths",5,0
+"Butterflies and Moths",6,0
+"Butterflies and Moths",7,0
+"Butterflies and Moths",8,0
+"Butterflies and Moths",9,0
+"Butterflies and Moths",10,0
+"Butterflies and Moths",11,0
+"Butterflies and Moths",12,0
+"Butterflies and Moths",13,0
+"Butterflies and Moths",14,0
+"Butterflies and Moths",15,0
+"Butterflies and Moths",16,1
+"Butterflies and Moths",17,0
+"Butterflies and Moths",18,0
+"Butterflies and Moths",19,0
+"Butterflies and Moths",20,0
+"Butterflies and Moths",21,0
+"Butterflies and Moths",22,0
+"Butterflies and Moths",23,0
+"Coyote",0,0
+"Coyote",1,3
+"Coyote",2,1
+"Coyote",3,3
+"Coyote",4,6
+"Coyote",5,1
+"Coyote",6,1
+"Coyote",7,1
+"Coyote",8,0
+"Coyote",9,0
+"Coyote",10,0
+"Coyote",11,1
+"Coyote",12,0
+"Coyote",13,0
+"Coyote",14,0
+"Coyote",15,0
+"Coyote",16,0
+"Coyote",17,0
+"Coyote",18,2
+"Coyote",19,0
+"Coyote",20,0
+"Coyote",21,0
+"Coyote",22,0
+"Coyote",23,2
+"Eastern Bluebird",0,0
+"Eastern Bluebird",1,0
+"Eastern Bluebird",2,0
+"Eastern Bluebird",3,0
+"Eastern Bluebird",4,0
+"Eastern Bluebird",5,0
+"Eastern Bluebird",6,0
+"Eastern Bluebird",7,0
+"Eastern Bluebird",8,0
+"Eastern Bluebird",9,0
+"Eastern Bluebird",10,0
+"Eastern Bluebird",11,0
+"Eastern Bluebird",12,1
+"Eastern Bluebird",13,0
+"Eastern Bluebird",14,0
+"Eastern Bluebird",15,0
+"Eastern Bluebird",16,0
+"Eastern Bluebird",17,0
+"Eastern Bluebird",18,0
+"Eastern Bluebird",19,0
+"Eastern Bluebird",20,0
+"Eastern Bluebird",21,0
+"Eastern Bluebird",22,0
+"Eastern Bluebird",23,0
+"Insect",0,0
+"Insect",1,0
+"Insect",2,0
+"Insect",3,0
+"Insect",4,0
+"Insect",5,0
+"Insect",6,0
+"Insect",7,0
+"Insect",8,0
+"Insect",9,0
+"Insect",10,0
+"Insect",11,0
+"Insect",12,0
+"Insect",13,1
+"Insect",14,0
+"Insect",15,0
+"Insect",16,1
+"Insect",17,1
+"Insect",18,0
+"Insect",19,0
+"Insect",20,0
+"Insect",21,0
+"Insect",22,0
+"Insect",23,0
+"Unknown",0,0
+"Unknown",1,0
+"Unknown",2,0
+"Unknown",3,0
+"Unknown",4,1
+"Unknown",5,0
+"Unknown",6,0
+"Unknown",7,0
+"Unknown",8,0
+"Unknown",9,0
+"Unknown",10,0
+"Unknown",11,1
+"Unknown",12,3
+"Unknown",13,3
+"Unknown",14,1
+"Unknown",15,2
+"Unknown",16,0
+"Unknown",17,0
+"Unknown",18,0
+"Unknown",19,0
+"Unknown",20,0
+"Unknown",21,0
+"Unknown",22,0
+"Unknown",23,0
+"Vehicle",0,0
+"Vehicle",1,0
+"Vehicle",2,0
+"Vehicle",3,0
+"Vehicle",4,0
+"Vehicle",5,0
+"Vehicle",6,0
+"Vehicle",7,0
+"Vehicle",8,29
+"Vehicle",9,8
+"Vehicle",10,18
+"Vehicle",11,1
+"Vehicle",12,0
+"Vehicle",13,2
+"Vehicle",14,0
+"Vehicle",15,0
+"Vehicle",16,22
+"Vehicle",17,4
+"Vehicle",18,0
+"Vehicle",19,0
+"Vehicle",20,0
+"Vehicle",21,0
+"Vehicle",22,0
+"Vehicle",23,0
+"White-tailed Deer",0,29
+"White-tailed Deer",1,25
+"White-tailed Deer",2,46
+"White-tailed Deer",3,47
+"White-tailed Deer",4,29
+"White-tailed Deer",5,58
+"White-tailed Deer",6,47
+"White-tailed Deer",7,12
+"White-tailed Deer",8,6
+"White-tailed Deer",9,3
+"White-tailed Deer",10,5
+"White-tailed Deer",11,5
+"White-tailed Deer",12,3
+"White-tailed Deer",13,6
+"White-tailed Deer",14,7
+"White-tailed Deer",15,4
+"White-tailed Deer",16,15
+"White-tailed Deer",17,18
+"White-tailed Deer",18,32
+"White-tailed Deer",19,81
+"White-tailed Deer",20,123
+"White-tailed Deer",21,40
+"White-tailed Deer",22,15
+"White-tailed Deer",23,21
+"Wild Turkey",0,0
+"Wild Turkey",1,0
+"Wild Turkey",2,0
+"Wild Turkey",3,0
+"Wild Turkey",4,0
+"Wild Turkey",5,0
+"Wild Turkey",6,0
+"Wild Turkey",7,2
+"Wild Turkey",8,0
+"Wild Turkey",9,1
+"Wild Turkey",10,1
+"Wild Turkey",11,0
+"Wild Turkey",12,0
+"Wild Turkey",13,0
+"Wild Turkey",14,0
+"Wild Turkey",15,1
+"Wild Turkey",16,1
+"Wild Turkey",17,0
+"Wild Turkey",18,0
+"Wild Turkey",19,0
+"Wild Turkey",20,0
+"Wild Turkey",21,0
+"Wild Turkey",22,0
+"Wild Turkey",23,0

@@ -1,0 +1,11 @@
+"family","genus","species","common_name","detections_count","percent_active"
+"Cervidae","Odocoileus","virginianus","White-tailed Deer",677,25.4440791605347
+"","","","Vehicle",84,21.3883375695243
+"Canidae","Canis","latrans","Coyote",21,NA
+"","","","Bird",13,21.3883375695243
+"","","","Unknown",11,21.3883375695243
+"Phasianidae","Meleagris","gallopavo","Wild Turkey",6,NA
+"","","","Insect",3,21.3883375695243
+"","","","Butterflies and Moths",1,21.3883375695243
+"Turdidae","Sialia","sialis","Eastern Bluebird",1,NA
+"Ursidae","Ursus","americanus","American Black Bear",1,NA

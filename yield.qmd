@@ -8,14 +8,14 @@ editor: visual
 
 Looking at differences in yield (bushels/acre) based on tannin concentration (0%:control or 10%:treatment).
 
-Response Variable: 
+Response Variable:
 
-- Yield (bushles/acre)
+-   Yield (bushles/acre)
 
 Predictor Variables:
 
-- Tannin.Concentration (0: Control, 1: Tannins)
-- Plot (1-20)
+-   Tannin.Concentration (0: Control, 1: Tannins)
+-   Plot (1-20)
 
 Below is our process of fitting our data to the best possible model.
 
@@ -93,4 +93,18 @@ summary(mem_yield_2)
 
 **Model indicates that differences in yield based on tannin concentrations are insignificant.**
 
-**Would an ANOVA be a more appropriate model?**
+## ANOVA Models 
+
+```{r}
+anova_yield_1 <- aov(Yield ~ Tannin.Concentration, data = yield_data)
+
+anova_yield_2 <- aov(Yield ~ Tannin.Concentration + Plot, data = yield_data)
+```
+
+```{r}
+AIC(anova_yield_1, anova_yield_2)
+```
+
+```{r}
+summary(anova_cam_2)
+```
